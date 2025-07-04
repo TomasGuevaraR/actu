@@ -8,6 +8,9 @@ use App\Http\Controllers\PerfilController;
 use App\Http\Middleware\PreventBackHistory;
 use App\Http\Controllers\UsuarioController;
 use App\Models\Miembro;
+use App\Http\Controllers\PresupuestoController;
+use App\Http\Controllers\MovimientoController;
+
 
 // RUTAS DE AUTENTICACIÓN
 Route::get('/login', [LoginController::class, 'showLoginForm'])
@@ -35,7 +38,10 @@ Route::middleware(['auth', PreventBackHistory::class])->group(function () {
     Route::get('/libro-contable', fn () => view('libro.index'))->name('libro-contable.index');
 
     // Presupuesto
-    Route::get('/presupuesto', fn () => view('presupuesto.index'))->name('presupuesto.index');
+    Route::get('/presupuesto', fn () => view('presupuestos.index'))->name('presupuesto.index');
+    Route::resource('presupuestos', PresupuestoController::class)->middleware('auth');
+    Route::resource('movimientos', MovimientoController::class)->middleware('auth');
+
 
     // Miembros
     Route::resource('miembros', MiembroController::class)->except(['show']);

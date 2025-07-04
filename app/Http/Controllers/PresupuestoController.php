@@ -1,0 +1,99 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Presupuesto;
+
+class PresupuestoController extends Controller
+{
+    /**
+     * Mostrar todos los presupuestos.
+     */
+    public function index()
+    {
+        $presupuestos = Presupuesto::with('movimientos')->orderBy('nombre_casilla')->get();
+
+        return view('presupuestos.index', compact('presupuestos'));
+    }
+
+    /**
+     * Mostrar formulario para crear nuevo presupuesto.
+     */
+    public function create()
+    {
+        return view('presupuestos.create');
+    }
+
+    /**
+     * Guardar un nuevo presupuesto en la base de datos.
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'nombre_casilla'   => 'required|string|max:255',
+            'tipo'             => 'required|in:ingreso,egreso',
+            'valor_mensual'    => 'required|numeric|min:0',
+            'año'              => 'required|digits:4|integer|min:2024',
+        ]);
+
+        Presupuesto::create([
+            'nombre_casilla'   => $request->nombre_casilla,
+            'tipo'             => $request->tipo,
+            'valor_mensual'    => $request->valor_mensual,
+            'año'              => $request->año,
+        ]);
+
+        return redirect()->route('presupuestos.index')
+                        ->with('success', 'Presupuesto creado correctamente.');
+    }
+
+    /**
+     * Mostrar un presupuesto específico (opcional).
+     */
+    public function show($id)
+    {
+        $presupuesto = Presupuesto::findOrFail($id);
+        return view('presupuestos.show', compact('presupuesto'));
+    }
+
+    /**
+     * Mostrar formulario para editar un presupuesto.
+     */
+    public function edit($id)
+    {
+        $presupuesto = Presupuesto::findOrFail($id);
+        return view('presupuestos.edit', compact('presupuesto'));
+    }
+
+    /**
+     * Actualizar un presupuesto existente.
+     */
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'nombre_casilla'   => 'required|string|max:255',
+            'tipo'             => 'required|in:ingreso,egreso',
+            'valor_mensual'    => 'required|numeric|min:0',
+            'año'              => 'required|digits:4|integer|min:2024',
+        ]);
+
+        $presupuesto = Presupuesto::findOrFail($id);
+        $presupuesto->update($request->all());
+
+        return redirect()->route('presupuestos.index')
+                        ->with('success', 'Presupuesto actualizado correctamente.');
+    }
+
+    /**
+     * Eliminar un presupuesto.
+     */
+    public function destroy($id)
+    {
+        $presupuesto = Presupuesto::findOrFail($id);
+        $presupuesto->delete();
+
+        return redirect()->route('presupuestos.index')
+                        ->with('success', 'Presupuesto eliminado correctamente.');
+    }
+}

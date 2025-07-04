@@ -52,7 +52,7 @@
         @php
             $modulos = [
                 ['titulo' => 'Libro Contable', 'icono' => 'fa-book', 'color' => 'text-green-600', 'ruta' => route('libro-contable.index')],
-                ['titulo' => 'Presupuesto', 'icono' => 'fa-coins', 'color' => 'text-yellow-500', 'ruta' => route('presupuesto.index')],
+                ['titulo' => 'Presupuestos', 'icono' => 'fa-coins', 'color' => 'text-yellow-500', 'ruta' => route('presupuestos.index')],
                 ['titulo' => 'Miembros', 'icono' => 'fa-users', 'color' => 'text-blue-500', 'ruta' => route('miembros.index')],
                 ['titulo' => 'Usuarios', 'icono' => 'fa-user-shield', 'color' => 'text-indigo-600', 'ruta' => route('usuarios.index')],
                 ['titulo' => 'Reportes', 'icono' => 'fa-chart-bar', 'color' => 'text-purple-600', 'ruta' => route('reporte.index')],
