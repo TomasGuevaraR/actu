@@ -12,6 +12,7 @@ class Presupuesto extends Model
         'tipo',
         'valor_mensual',
         'año',
+        'responsable',
     ];
 
     // Relación: un presupuesto tiene muchos movimientos

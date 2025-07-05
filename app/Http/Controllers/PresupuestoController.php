@@ -8,13 +8,17 @@ use App\Models\Presupuesto;
 class PresupuestoController extends Controller
 {
     /**
-     * Mostrar todos los presupuestos.
+     * Mostrar todos los presupuestos filtrados por año.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $presupuestos = Presupuesto::with('movimientos')->orderBy('nombre_casilla')->get();
+        $año = $request->get('año', now()->year); // Año actual por defecto
+        $presupuestos = Presupuesto::with('movimientos')
+                            ->where('año', $año)
+                            ->orderBy('nombre_casilla')
+                            ->get();
 
-        return view('presupuestos.index', compact('presupuestos'));
+        return view('presupuestos.index', compact('presupuestos', 'año'));
     }
 
     /**
@@ -49,7 +53,7 @@ class PresupuestoController extends Controller
     }
 
     /**
-     * Mostrar un presupuesto específico (opcional).
+     * Mostrar un presupuesto específico.
      */
     public function show($id)
     {

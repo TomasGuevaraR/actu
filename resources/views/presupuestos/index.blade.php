@@ -10,17 +10,21 @@
         <h2 class="text-2xl font-bold text-[#0166b3]">
             <i class="bi bi-calculator-fill me-2"></i> Presupuesto Anual
         </h2>
-
-        <div class="flex flex-col md:flex-row md:items-center gap-4 w-full md:w-auto">
-            <a href="#" class="bg-[#0d6efd] hover:bg-[#014a82] text-white font-bold py-2 px-4 rounded-full transition duration-300 shadow-md">
-                📘 Nuevo Presupuesto
-            </a>
-
             <a href="{{ route('presupuestos.create') }}" class="bg-[#0d6efd] hover:bg-[#014a82] text-white font-bold py-2 px-4 rounded-full">
                 ➕ Crear Casilla
             </a>
         </div>
+        <form method="GET" class="mb-4">
+            <label for="año">Seleccionar año:</label>
+                <select name="año" onchange="this.form.submit()" class="border p-1 rounded">
+                    @for ($y = now()->year; $y >= 2024; $y--)
+                        <option value="{{ $y }}" {{ $año == $y ? 'selected' : '' }}>{{ $y }}</option>
+                    @endfor
+            </select>
+        </form>
     </div>
+    
+
 </div>
 
 
