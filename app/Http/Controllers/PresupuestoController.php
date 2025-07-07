@@ -36,16 +36,18 @@ class PresupuestoController extends Controller
     {
         $request->validate([
             'nombre_casilla'   => 'required|string|max:255',
-            'tipo'             => 'required|in:ingreso,egreso',
+            'categoria'        => 'required|string|max:255',
             'valor_mensual'    => 'required|numeric|min:0',
             'año'              => 'required|digits:4|integer|min:2024',
+            'responsable'      => 'nullable|string|max:255',
         ]);
 
         Presupuesto::create([
             'nombre_casilla'   => $request->nombre_casilla,
-            'tipo'             => $request->tipo,
+            'categoria'        => $request->categoria,
             'valor_mensual'    => $request->valor_mensual,
             'año'              => $request->año,
+            'responsable'      => $request->responsable,
         ]);
 
         return redirect()->route('presupuestos.index')
@@ -77,9 +79,10 @@ class PresupuestoController extends Controller
     {
         $request->validate([
             'nombre_casilla'   => 'required|string|max:255',
-            'tipo'             => 'required|in:ingreso,egreso',
+            'categoria'        => 'required|string|max:255',
             'valor_mensual'    => 'required|numeric|min:0',
             'año'              => 'required|digits:4|integer|min:2024',
+            'responsable'      => 'nullable|string|max:255',
         ]);
 
         $presupuesto = Presupuesto::findOrFail($id);

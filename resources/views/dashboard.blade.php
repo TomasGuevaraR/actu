@@ -51,7 +51,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 w-full">
         @php
             $modulos = [
-                ['titulo' => 'Libro Contable', 'icono' => 'fa-book', 'color' => 'text-green-600', 'ruta' => route('libro-contable.index')],
+                ['titulo' => 'Libro Contable', 'icono' => 'fa-book', 'color' => 'text-green-600', 'ruta' => route('libro.index')],
                 ['titulo' => 'Presupuestos', 'icono' => 'fa-coins', 'color' => 'text-yellow-500', 'ruta' => route('presupuestos.index')],
                 ['titulo' => 'Miembros', 'icono' => 'fa-users', 'color' => 'text-blue-500', 'ruta' => route('miembros.index')],
                 ['titulo' => 'Usuarios', 'icono' => 'fa-user-shield', 'color' => 'text-indigo-600', 'ruta' => route('usuarios.index')],

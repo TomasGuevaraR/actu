@@ -52,7 +52,7 @@
                 <i class="fas fa-home text-yellow-400"></i>
                 <span class="menu-label">Inicio</span>
             </a>
-            <a href="{{ route('libro-contable.index') }}" class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
+            <a href="{{ route('libro.index') }}" class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
                 <i class="fas fa-book-open text-green-400"></i>
                 <span class="menu-label">Libro Contable</span>
             </a>
@@ -60,6 +60,10 @@
                 <i class="fas fa-coins text-yellow-300"></i>
                 <span class="menu-label">Presupuestos</span>
             </a>
+            <a href="{{ route('estado.index') }}" class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
+                <i class="fas fa-coins text-yellow-300"></i>
+                <span class="menu-label">Estado Financiero</span>
+                
             <a href="{{ route('miembros.index') }}" class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
                 <i class="fas fa-users text-purple-400"></i>
                 <span class="menu-label">Miembros</span>

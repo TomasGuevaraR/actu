@@ -24,11 +24,7 @@
         </form>
     </div>
     
-
 </div>
-
-
-
 
             <!-- Mensaje de éxito -->
             @if(session('success'))
@@ -43,7 +39,7 @@
         <thead class="bg-[#0166b3] text-white text-sm">
             <tr>
                 <th class="py-2 px-4 border">Casilla</th>
-                <th class="py-2 px-4 border">Tipo</th>
+                <th class="py-2 px-4 border">Categoria</th>
                 <th class="py-2 px-4 border">Mensual</th>
                 <th class="py-2 px-4 border">Año</th>
                 <th class="py-2 px-4 border">Gastado</th>
@@ -63,7 +59,7 @@
                 @endphp
                 <tr class="hover:bg-gray-100">
                     <td class="py-2 px-4 border">{{ $presupuesto->nombre_casilla }}</td>
-                    <td class="py-2 px-4 border capitalize">{{ $presupuesto->tipo }}</td>
+                    <td class="py-2 px-4 border capitalize">{{ $presupuesto->categoria }}</td>
                     <td class="py-2 px-4 border">${{ number_format($presupuesto->valor_mensual, 0, ',', '.') }}</td>
                     <td class="py-2 px-4 border">${{ number_format($total_anual, 0, ',', '.') }}</td>
                     <td class="py-2 px-4 border">${{ number_format($gastado, 0, ',', '.') }}</td>

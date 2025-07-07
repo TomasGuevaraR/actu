@@ -10,6 +10,13 @@ use App\Http\Controllers\UsuarioController;
 use App\Models\Miembro;
 use App\Http\Controllers\PresupuestoController;
 use App\Http\Controllers\MovimientoController;
+use App\Http\Controllers\IngresoController;
+use App\Http\Controllers\EgresoController;
+use App\Http\Controllers\DiezmoController;
+use App\Http\Controllers\LibroController;
+use App\Http\Controllers\EstadoController;
+
+
 
 
 // RUTAS DE AUTENTICACIÓN
@@ -34,14 +41,21 @@ Route::middleware(['auth', PreventBackHistory::class])->group(function () {
     // Dashboard
     Route::get('/dashboard', fn () => view('dashboard'))->name('dashboard');
 
+
     // Libro Contable
     Route::get('/libro-contable', fn () => view('libro.index'))->name('libro-contable.index');
+    Route::get('/libro', [LibroController::class, 'index'])->name('libro.index');
+
 
     // Presupuesto
     Route::get('/presupuesto', fn () => view('presupuestos.index'))->name('presupuesto.index');
     Route::resource('presupuestos', PresupuestoController::class)->middleware('auth');
     Route::resource('movimientos', MovimientoController::class)->middleware('auth');
 
+    // Estados Financieros
+    Route::get('/estados', [EstadoController::class, 'index'])->name('estado.index');
+    Route::get('/estado/saldo-inicial', [EstadoController::class, 'formSaldoInicial'])->name('estado.saldo-inicial.form');
+Route::post('/estado/saldo-inicial', [EstadoController::class, 'guardarSaldoInicial'])->name('estado.saldo-inicial.guardar');
 
     // Miembros
     Route::resource('miembros', MiembroController::class)->except(['show']);
@@ -72,3 +86,12 @@ Route::middleware(['auth', PreventBackHistory::class])->group(function () {
 if (file_exists(__DIR__.'/auth.php')) {
     require __DIR__.'/auth.php';
 }
+
+// Rutas para Ingresos
+Route::get('/ingresos/create', [IngresoController::class, 'create'])->name('ingresos.create');
+
+// Rutas para Egresos
+Route::get('/egresos/create', [EgresoController::class, 'create'])->name('egresos.create');
+
+// Rutas para Diezmos y Ofrendas
+Route::get('/diezmos', [DiezmoController::class, 'index'])->name('diezmos.index');

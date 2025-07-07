@@ -9,7 +9,7 @@ class Presupuesto extends Model
     // Permitir asignación masiva en estos campos
     protected $fillable = [
         'nombre_casilla',
-        'tipo',
+        'categoria',
         'valor_mensual',
         'año',
         'responsable',
