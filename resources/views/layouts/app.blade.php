@@ -61,8 +61,9 @@
                 <span class="menu-label">Presupuestos</span>
             </a>
             <a href="{{ route('estado.index') }}" class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
-                <i class="fas fa-coins text-yellow-300"></i>
-                <span class="menu-label">Estado Financiero</span>
+            <i class="fas fa-file-invoice  text-pink-200 text-[#0166b3]"></i>
+            <span class="menu-label ">Estado Financiero</span>
+            </a>
                 
             <a href="{{ route('miembros.index') }}" class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
                 <i class="fas fa-users text-purple-400"></i>

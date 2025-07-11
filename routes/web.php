@@ -17,8 +17,6 @@ use App\Http\Controllers\LibroController;
 use App\Http\Controllers\EstadoController;
 
 
-
-
 // RUTAS DE AUTENTICACIÓN
 Route::get('/login', [LoginController::class, 'showLoginForm'])
     ->name('login')
@@ -87,11 +85,19 @@ if (file_exists(__DIR__.'/auth.php')) {
     require __DIR__.'/auth.php';
 }
 
+// Rutas para Egresos
+
+Route::get('/egresos/create', [EgresoController::class, 'create'])->name('egresos.create');
+Route::post('/egresos/store', [EgresoController::class, 'store'])->name('egresos.store');
+
+
 // Rutas para Ingresos
 Route::get('/ingresos/create', [IngresoController::class, 'create'])->name('ingresos.create');
+Route::post('/ingresos/store', [IngresoController::class, 'store'])->name('ingresos.store');
 
-// Rutas para Egresos
-Route::get('/egresos/create', [EgresoController::class, 'create'])->name('egresos.create');
+
+
+
 
 // Rutas para Diezmos y Ofrendas
 Route::get('/diezmos', [DiezmoController::class, 'index'])->name('diezmos.index');

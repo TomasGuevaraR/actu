@@ -7,12 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class Movimiento extends Model
 {
     protected $fillable = [
-        'presupuesto_id',
-        'fecha',
-        'tipo',
-        'valor',
-        'descripcion',
-    ];
+    'fecha',
+    'consecutivo',
+    'detalle',
+    'concepto',
+    'casilla',
+    'valor',
+    'tipo',
+    'saldo',
+];
 
     // Relación inversa con presupuesto
     public function presupuesto()
