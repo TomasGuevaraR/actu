@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 11-07-2025 a las 05:06:33
+-- Tiempo de generación: 15-07-2025 a las 04:18:27
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -44,6 +44,30 @@ CREATE TABLE `cache_locks` (
   `owner` varchar(255) NOT NULL,
   `expiration` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `diezmos`
+--
+
+CREATE TABLE `diezmos` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `nombre` varchar(255) NOT NULL,
+  `valor` int(11) NOT NULL,
+  `fecha` date NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `diezmos`
+--
+
+INSERT INTO `diezmos` (`id`, `nombre`, `valor`, `fecha`, `created_at`, `updated_at`) VALUES
+(1, 'daniel viloria', 500000, '2025-07-13', '2025-07-14 02:50:29', '2025-07-14 02:50:29'),
+(2, 'tomas guevara', 1000000, '2025-07-13', '2025-07-14 02:50:29', '2025-07-14 02:50:29'),
+(3, 'ruth mora', 60000, '2025-07-13', '2025-07-14 02:50:29', '2025-07-14 02:50:29');
 
 -- --------------------------------------------------------
 
@@ -182,7 +206,9 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (13, '2025_07_07_123329_add_campos_financieros_to_estados_table', 7),
 (14, '2025_07_10_173259_add_detalle_concepto_casilla_to_movimientos', 8),
 (15, '2025_07_10_173940_remove_descripcion_from_movimientos_table', 9),
-(16, '2025_07_10_221300_make_presupuesto_id_nullable_in_movimientos', 10);
+(16, '2025_07_10_221300_make_presupuesto_id_nullable_in_movimientos', 10),
+(17, '2025_07_13_205936_create_diezmos_table', 11),
+(18, '2025_07_13_214912_create_diezmos_table', 12);
 
 -- --------------------------------------------------------
 
@@ -210,8 +236,11 @@ CREATE TABLE `movimientos` (
 --
 
 INSERT INTO `movimientos` (`id`, `presupuesto_id`, `fecha`, `consecutivo`, `tipo`, `valor`, `saldo`, `detalle`, `concepto`, `casilla`, `created_at`, `updated_at`) VALUES
-(3, NULL, '2025-07-10', '09', 'egreso', 1423500.00, -1423500.00, 'Daniel Viloria', 'Sueldo del Pastor', 'Sueldo Pastor', '2025-07-11 03:54:22', '2025-07-11 03:54:22'),
-(4, NULL, '2025-07-10', '124', 'ingreso', 50000.00, -1373500.00, 'Iglesia Templo Unido', 'ofrenda especial', NULL, '2025-07-11 04:35:09', '2025-07-11 04:35:09');
+(3, NULL, '2025-07-10', '09', 'egreso', 1423500.00, -1423500.00, 'Daniel Viloria', 'Sueldo del Pastor', 'Sueldo Pastor', '2025-07-11 03:54:22', '2025-07-15 06:05:53'),
+(4, NULL, '2025-07-10', '124', 'ingreso', 50000.00, -1373500.00, 'Iglesia Templo Unido', 'ofrenda especial', NULL, '2025-07-11 04:35:09', '2025-07-11 04:35:09'),
+(5, NULL, '2025-07-11', '125', 'ingreso', 1000000.00, -373500.00, 'Iglesia Templo Unido', 'ofrenda', NULL, '2025-07-11 17:39:00', '2025-07-11 17:39:00'),
+(7, NULL, '2025-07-13', '126', 'ingreso', 1580000.00, -217000.00, 'Templo Unido', 'escuela dominical', NULL, '2025-07-14 02:50:30', '2025-07-15 03:37:16'),
+(8, NULL, '2025-07-14', '10', 'egreso', 600000.00, -717000.00, 'Daniel Viloria', 'Bonificación Pastor', 'Sueldo Pastor', '2025-07-15 06:07:32', '2025-07-15 06:09:27');
 
 -- --------------------------------------------------------
 
@@ -257,7 +286,7 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('6v8S5wUUshRn8pc1ks5hbykyEwE6bHU4KpPJCzNP', 5, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiWjlqU1d4cDBxR2dDdUE0YU9vVk5UUm9GTkFYZGVNWDQ3VzM4REVTRyI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6Mjk6Imh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9lc3RhZG9zIjt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6NTt9', 1752203131);
+('6NMBDqniJ7IjY5FCFjQ4I8R3HOGwXFo2xCPg53aq', 5, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiRm5xMzFxSVBwRWdaS0o3c2NhZlpGTjZZb1JZSEpiOG9hRWxBR3kxbSI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjI5OiJodHRwOi8vbG9jYWxob3N0OjgwMDAvZGllem1vcyI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjU7fQ==', 1752542225);
 
 -- --------------------------------------------------------
 
@@ -300,6 +329,12 @@ ALTER TABLE `cache`
 --
 ALTER TABLE `cache_locks`
   ADD PRIMARY KEY (`key`);
+
+--
+-- Indices de la tabla `diezmos`
+--
+ALTER TABLE `diezmos`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indices de la tabla `estados`
@@ -373,6 +408,12 @@ ALTER TABLE `usuarios`
 --
 
 --
+-- AUTO_INCREMENT de la tabla `diezmos`
+--
+ALTER TABLE `diezmos`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
 -- AUTO_INCREMENT de la tabla `estados`
 --
 ALTER TABLE `estados`
@@ -400,13 +441,13 @@ ALTER TABLE `miembros`
 -- AUTO_INCREMENT de la tabla `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT de la tabla `movimientos`
 --
 ALTER TABLE `movimientos`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT de la tabla `presupuestos`

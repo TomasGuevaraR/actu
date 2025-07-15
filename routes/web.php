@@ -96,8 +96,6 @@ Route::get('/ingresos/create', [IngresoController::class, 'create'])->name('ingr
 Route::post('/ingresos/store', [IngresoController::class, 'store'])->name('ingresos.store');
 
 
-
-
-
 // Rutas para Diezmos y Ofrendas
 Route::get('/diezmos', [DiezmoController::class, 'index'])->name('diezmos.index');
+Route::resource('diezmos', DiezmoController::class);

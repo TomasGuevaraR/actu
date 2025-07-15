@@ -75,17 +75,15 @@
                             <td class="py-2 px-4 border fw-semibold">
                                 {{ number_format($mov->saldo_actual ?? 0, 0, ',', '.') }}
                             </td>
-                            <!-- Acciones -->
+                                <!-- Acciones -->
                             <td class="py-2 px-4 border text-center">
-                                <a href="#" class="text-blue-500 hover:text-blue-700 mr-2" title="Editar">
-                                    <i class="bi bi-pencil-square"></i>
+                                <a href="{{ route('movimientos.edit', $mov->id) }}" class="text-blue-600 hover:text-blue-800 mx-1" title="Editar">
+                                    ✏️
                                 </a>
-                                <form action="#" method="POST" class="inline">
+                                <form action="{{ route('movimientos.destroy', $mov->id) }}" method="POST" class="inline-block" onsubmit="return confirm('¿Eliminar este movimiento?')">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" onclick="return confirm('¿Estás seguro de eliminar este movimiento?')" class="text-red-500 hover:text-red-700">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                    <button type="submit" class="text-red-600 hover:text-red-800 mx-1" title="Eliminar">🗑️</button>
                                 </form>
                             </td>
                         </tr>
@@ -102,12 +100,36 @@
                         <td colspan="6" class="py-2 px-4 text-right">Totales:</td>
                         <td class="py-2 px-4 text-green-700">{{ number_format($totalEntradas, 0, ',', '.') }}</td>
                         <td class="py-2 px-4 text-red-700">{{ number_format($totalSalidas, 0, ',', '.') }}</td>
-                        <td class="py-2 px-4 text-black">{{ number_format($ultimoSaldo, 0, ',', '.') }}</td>
-                        <td class="py-2 px-4 text-center">—</td>
+                        <td class="py-2 px-4 text-black">{{ number_format($saldoFinal, 0, ',', '.') }}</td>
+                        <td class="py-2 px-4">—</td>
                     </tr>
                 </tfoot>
+
             </table>
         </div>
     </div>
 </div>
 @endsection
+
+@if (session('success'))
+    <div 
+        class="fixed top-5 right-5 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate__animated animate__fadeInDown z-50" 
+        id="toast"
+    >
+        {{ session('success') }}
+    </div>
+
+    <script>
+        // Ocultar el toast después de 3 segundos
+        setTimeout(() => {
+            const toast = document.getElementById('toast');
+            if (toast) {
+                toast.classList.add('animate__fadeOutUp');
+                setTimeout(() => toast.remove(), 1000);
+            }
+        }, 3000);
+    </script>
+
+    <!-- Incluye Animate.css si no lo tienes aún -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+@endif

@@ -21,22 +21,30 @@ class LibroController extends Controller
         // 2. Obtener los movimientos ordenados por fecha ascendente (para procesar saldo correctamente)
         $movimientos = Movimiento::orderBy('fecha', 'asc')->get();
 
+        $totalEntradas = 0;
+        $totalSalidas = 0;
+        $saldoFinal = $saldo; // Copia del saldo original
+
         // 3. Recalcular el saldo para cada movimiento
         foreach ($movimientos as $mov) {
             if ($mov->tipo === 'ingreso') {
-                $saldo += $mov->valor;
+                $saldoFinal += $mov->valor;
+                $totalEntradas += $mov->valor;
             } elseif ($mov->tipo === 'egreso') {
-                $saldo -= $mov->valor;
+                $saldoFinal -= $mov->valor;
+                $totalSalidas += $mov->valor;
             }
 
-            // Guardar el saldo actual en una propiedad personalizada (no se guarda en la BD)
-            $mov->saldo_actual = $saldo;
+            // Guardar el saldo actual para cada fila
+            $mov->saldo_actual = $saldoFinal;
         }
 
         // 4. Revertir el orden para mostrar del más reciente al más antiguo
-        $movimientos = $movimientos->sortByDesc('fecha');
+        $movimientos = $movimientos->sortBy('fecha');
 
-        return view('libro.index', compact('movimientos'));
+
+        // 5. Enviar también los totales para mostrar en el pie
+        return view('libro.index', compact('movimientos', 'totalEntradas', 'totalSalidas', 'saldoFinal'));
     }
 
     public function crearIngreso()
