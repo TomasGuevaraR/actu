@@ -52,10 +52,10 @@
                 <!-- Casilla -->
                 <div>
                     <label for="origen" class="block text-sm font-medium text-gray-700">Casilla</label>
-                    <select name="origen" id="origen" class="form-control" required>
+                    <select name="presupuesto_id" id="presupuesto_id" class="form-control" required>
                         <option value="">Seleccione una casilla</option>
                         @foreach ($casillas as $casilla)
-                            <option value="{{ $casilla->nombre_casilla }}">{{ $casilla->nombre_casilla }}</option>
+                            <option value="{{ $casilla->id }}">{{ $casilla->nombre_casilla }}</option>
                         @endforeach
                     </select>
                 </div>

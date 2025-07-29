@@ -11,7 +11,7 @@
             <!-- Fecha -->
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700">Fecha</label>
-                <input type="date" name="fecha" required class="form-control" />
+                <input type="date" name="fecha" required class="form-control" value="{{ date('Y-m-d') }}" />
             </div>
 
             <!-- Detalle y concepto -->
@@ -29,9 +29,7 @@
             <!-- Lista de diezmos -->
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Diezmos</label>
-                <div id="diezmoList">
-                    <!-- Aquí se agregarán los campos dinámicamente -->
-                </div>
+                <div id="diezmoList"></div>
                 <button type="button" onclick="agregarDiezmo()" class="mt-2 text-sm text-blue-600 hover:underline">
                     ➕ Agregar persona
                 </button>
@@ -66,10 +64,15 @@
     </div>
 </div>
 
+<!-- Datalist de miembros -->
+<datalist id="lista-miembros">
+    @foreach($miembros as $miembro)
+        <option value="{{ $miembro }}">
+    @endforeach
+</datalist>
+
 <!-- Scripts para lógica dinámica -->
 <script>
-    let index = 0;
-
     function agregarDiezmo() {
         const container = document.getElementById('diezmoList');
 
@@ -77,7 +80,7 @@
         div.classList.add('grid', 'grid-cols-2', 'gap-4', 'mb-2');
 
         div.innerHTML = `
-            <input type="text" name="nombres[]" placeholder="Nombre" class="form-control" required>
+            <input type="text" name="nombres[]" list="lista-miembros" placeholder="Nombre del miembro" class="form-control" required>
             <input type="number" name="valores[]" placeholder="Valor" class="form-control valor-diezmo" required min="0">
         `;
 
@@ -101,5 +104,10 @@
         document.getElementById('totalDiezmos').value = totalDiezmos.toLocaleString();
         document.getElementById('totalGeneral').value = total.toLocaleString();
     }
+
+    // Agrega un campo al cargar
+    window.addEventListener('DOMContentLoaded', () => {
+        agregarDiezmo();
+    });
 </script>
 @endsection

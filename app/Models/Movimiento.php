@@ -15,6 +15,9 @@ class Movimiento extends Model
     'valor',
     'tipo',
     'saldo',
+    'presupuesto_id', // ← agrega esto
+
+
 ];
 
     // Relación inversa con presupuesto

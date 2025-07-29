@@ -9,42 +9,42 @@ use App\Models\Presupuesto;
 class EgresoController extends Controller
 {
     public function create()
-    {
-        $casillas = Presupuesto::all();
-
-        return view('egresos.create', compact('casillas')); // ← Aquí las pasas a la vista
-    }
-
-    public function store(Request $request)
-    {
-        $request->validate([
-            'fecha' => 'required|date',
-            'consecutivo' => 'required|string|unique:movimientos,detalle',
-            'detalle' => 'required|string',
-            'concepto' => 'required|string',
-            'valor' => 'required|numeric|min:0',
-            'origen' => 'required|string',
-            'tipo' => 'required|in:egreso',
-        ]);
-
-        $ultimoMovimiento = Movimiento::orderBy('id', 'desc')->first();
-        $saldoAnterior = $ultimoMovimiento ? $ultimoMovimiento->saldo : 0;
-
-        $nuevoSaldo = $saldoAnterior - $request->valor;
-
-        Movimiento::create([
-    'fecha' => $request->fecha,
-    'consecutivo' => $request->consecutivo,
-    'detalle' => $request->detalle,
-    'concepto' => $request->concepto,
-    'casilla' => $request->origen, 
-    'valor' => $request->valor,
-    'tipo' => 'egreso',
-    'saldo' => $nuevoSaldo,
-]);
-
-
-        return redirect()->route('libro.index')->with('success', 'Egreso registrado correctamente.');
-    }
+{
+    $casillas = Presupuesto::orderBy('nombre_casilla')->get();
+    return view('egresos.create', compact('casillas'));
 }
+    public function store(Request $request)
+{
+    $request->validate([
+        'fecha' => 'required|date',
+        'consecutivo' => 'required|string|unique:movimientos,consecutivo',
+        'detalle' => 'required|string',
+        'concepto' => 'required|string',
+        'valor' => 'required|numeric|min:0',
+        'tipo' => 'required|in:egreso',
+        'presupuesto_id' => 'required|exists:presupuestos,id', // ← valida la casilla
+    ]);
 
+        // Obtener saldo anterior
+    $ultimoMovimiento = Movimiento::orderBy('id', 'desc')->first();
+    $saldoAnterior = $ultimoMovimiento ? $ultimoMovimiento->saldo : 0;
+
+    // Calcular nuevo saldo
+    $nuevoSaldo = $saldoAnterior - $request->valor;
+
+    // Guardar el egreso
+    Movimiento::create([
+        'fecha' => $request->fecha,
+        'consecutivo' => $request->consecutivo,
+        'detalle' => $request->detalle,
+        'concepto' => $request->concepto,
+        'valor' => $request->valor,
+        'tipo' => 'egreso',
+        'saldo' => $nuevoSaldo,
+        'presupuesto_id' => $request->presupuesto_id, // ← importante
+        'casilla' => optional(\App\Models\Presupuesto::find($request->presupuesto_id))->nombre_casilla, // opcional
+    ]);
+
+    return redirect()->route('libro.index')->with('success', 'Egreso registrado correctamente.');
+}
+}

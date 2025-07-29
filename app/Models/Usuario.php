@@ -40,3 +40,7 @@ class Usuario extends Authenticatable
         return $this->password;
     }
 }
+
+
+
+

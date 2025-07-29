@@ -17,6 +17,7 @@ class Diezmo extends Model
         'nombre',
         'valor',
         'fecha',
+        'movimiento_id',
     ];
 
     // Casts (opcional, útil para fechas)

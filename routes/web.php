@@ -15,6 +15,7 @@ use App\Http\Controllers\EgresoController;
 use App\Http\Controllers\DiezmoController;
 use App\Http\Controllers\LibroController;
 use App\Http\Controllers\EstadoController;
+use App\Http\Controllers\ReporteController;
 
 
 // RUTAS DE AUTENTICACIÓN
@@ -72,12 +73,16 @@ Route::post('/estado/saldo-inicial', [EstadoController::class, 'guardarSaldoInic
         $miembro = Miembro::where('numero_identificacion', $usuario->numero_identificacion)->first();
         return view('mi_perfil.index', compact('usuario', 'miembro'));
     })->name('mi-perfil.index');
+    Route::put('mi-perfil/actualizar', [PerfilController::class, 'update'])->name('mi-perfil.actualizar');
+
 
     Route::get('/mi-perfil/editar', [PerfilController::class, 'edit'])->name('mi-perfil.edit');
     Route::post('/mi-perfil/actualizar', [PerfilController::class, 'update'])->name('mi-perfil.update');
 
     // Reporte
-    Route::get('/reporte', fn () => view('reporte.index'))->name('reporte.index');
+    Route::get('/reporte', [ReporteController::class, 'index'])->name('reporte.index');
+    Route::post('/reportes', [ReporteController::class, 'store'])->name('reportes.store');
+    Route::delete('/reportes/{id}', [ReporteController::class, 'destroy'])->name('reportes.destroy');
 });
 
 // RUTAS GENERADAS AUTOMÁTICAMENTE POR BREEZE U OTRO SISTEMA

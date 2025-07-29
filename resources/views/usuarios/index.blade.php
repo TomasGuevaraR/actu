@@ -68,4 +68,17 @@
     </div>
 
 </div>
+@if(session('success'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: '{{ session('success') }}',
+                confirmButtonColor: '#0166b3'
+            });
+        });
+    </script>
+@endif
+
 @endsection

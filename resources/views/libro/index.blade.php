@@ -130,6 +130,6 @@
         }, 3000);
     </script>
 
-    <!-- Incluye Animate.css si no lo tienes aún -->
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 @endif

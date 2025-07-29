@@ -5,19 +5,23 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Diezmo;
 use App\Models\Movimiento;
-use App\Models\Estado;
+use App\Models\Miembro;
 use Carbon\Carbon;
 
 class DiezmoController extends Controller
 {
     public function index()
     {
-        return view('diezmo.index');
+        // Este método carga la vista con la lista de miembros para poder mostrarlos en el formulario
+        $miembros = Miembro::selectRaw("CONCAT(nombres, ' ', apellidos) as nombre_completo")->pluck('nombre_completo');
+        return view('diezmo.index', compact('miembros'));
     }
 
     public function create()
     {
-        return view('diezmo.create');
+        // Puedes usar este método si planeas mostrar un formulario separado para crear
+        $miembros = Miembro::all();
+        return view('diezmo.index', compact('miembros'));
     }
 
     public function store(Request $request)
@@ -34,39 +38,46 @@ class DiezmoController extends Controller
         ]);
 
         $fecha = $request->fecha;
+        $detalle = $request->detalle;
+        $concepto = $request->concepto;
         $ofrenda = $request->ofrenda ?? 0;
-        $totalDiezmos = 0;
-
-        // 1. Guardar diezmos individuales
-        foreach ($request->nombres as $i => $nombre) {
-            $valor = $request->valores[$i];
-
-            Diezmo::create([
-                'fecha'  => $fecha,
-                'nombre' => $nombre,
-                'valor'  => $valor,
-            ]);
-
-            $totalDiezmos += $valor;
-        }
-
-        // 2. Calcular total general
+        $totalDiezmos = array_sum($request->valores);
         $totalGeneral = $totalDiezmos + $ofrenda;
 
-        // 3. Obtener el último saldo para calcular el nuevo
-        $ultimoMovimiento = Movimiento::orderBy('id', 'desc')->first();
+        // Obtener saldo anterior
+        $ultimoMovimiento = Movimiento::latest('id')->first();
         $saldoAnterior = $ultimoMovimiento ? $ultimoMovimiento->saldo : 0;
         $nuevoSaldo = $saldoAnterior + $totalGeneral;
 
-        // 4. Guardar movimiento contable general
-        Movimiento::create([
-            'fecha'     => $fecha,
-            'detalle'   => $request->detalle,
-            'concepto'  => $request->concepto,
-            'valor'     => $totalGeneral,
-            'tipo'      => 'ingreso',
-            'saldo'     => $nuevoSaldo,
+        // Crear movimiento general
+        $movimiento = Movimiento::create([
+            'fecha'    => $fecha,
+            'detalle'  => $detalle,
+            'concepto' => $concepto,
+            'valor'    => $totalGeneral,
+            'tipo'     => 'ingreso',
+            'saldo'    => $nuevoSaldo,
         ]);
+
+        // Registrar los diezmos individuales
+        foreach ($request->nombres as $i => $nombre) {
+            Diezmo::create([
+                'fecha'         => $fecha,
+                'nombre'        => $nombre,
+                'valor'         => $request->valores[$i],
+                'movimiento_id' => $movimiento->id,
+            ]);
+        }
+
+        // Registrar la ofrenda si existe
+        if ($ofrenda > 0) {
+            Diezmo::create([
+                'fecha'         => $fecha,
+                'nombre'        => 'Ofrenda',
+                'valor'         => $ofrenda,
+                'movimiento_id' => $movimiento->id,
+            ]);
+        }
 
         return redirect()->route('libro.index')->with('success', 'Diezmos y ofrenda registrados correctamente.');
     }
