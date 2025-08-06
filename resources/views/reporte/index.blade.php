@@ -1,59 +1,218 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="p-6 max-w-5xl mx-auto">
-    <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
-        <h2 class="text-3xl font-bold text-[#0166b3]">📊 Módulo de Reportes</h2>
+<div class="container mx-auto px-4 py-6">
+    <h1 class="text-3xl font-bold text-blue-700 mb-6 text-center">Reportes Generales</h1>
 
-        <form action="{{ route('reportes.store') }}" method="POST" class="flex flex-col md:flex-row gap-3">
-            @csrf
-            <input type="text" name="titulo" placeholder="Título" required class="p-2 border rounded w-full md:w-48">
-            <input type="text" name="autor" placeholder="Autor" required class="p-2 border rounded w-full md:w-32">
-            <input type="date" name="fecha" required class="p-2 border rounded w-full md:w-36">
-            <input type="text" name="descripcion" placeholder="Descripción" class="p-2 border rounded w-full md:w-64">
-            <button type="submit" class="bg-[#0166b3] text-white px-4 py-2 rounded hover:bg-[#014a82]">Crear</button>
-        </form>
-    </div>
+    {{-- Filtro por Año --}}
+    <form method="GET" action="{{ route('reporte.index') }}" class="mb-8 flex justify-center items-center gap-4">
+        <label for="anio" class="text-gray-700">Selecciona el año:</label>
+        <select name="anio" id="anio" class="border border-gray-300 rounded px-7 py-2 text-sm">
+            @foreach ($aniosDisponibles as $opcion)
+                <option value="{{ $opcion }}" {{ $opcion == $anioSeleccionado ? 'selected' : '' }}>
+                    {{ $opcion }}
+                </option>
+            @endforeach
+        </select>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-800">
+            Filtrar
+        </button>
+    </form>
 
-    @if(session('success'))
-        <div class="bg-green-100 text-green-800 p-2 rounded mb-4">
-            {{ session('success') }}
+    {{-- Contenedor de Gráficos --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {{-- Gráfico 1: Ingresos vs Egresos Mensuales --}}
+        <div class="bg-white p-4 rounded shadow">
+            <h2 class="text-lg font-semibold text-blue-700 mb-2">Ingresos vs Egresos ({{ $anioSeleccionado }})</h2>
+            <div class="chart-container" style="position: relative; height:300px; width:100%">
+                <canvas id="graficoIE"></canvas>
+            </div>
+            @if(array_sum($ingresosMensuales) == 0 && array_sum($egresosMensuales) == 0)
+                <p class="text-gray-500 text-center mt-4">No hay datos disponibles para este período</p>
+            @endif
         </div>
-    @endif
 
-    <div class="bg-white shadow-md rounded-lg overflow-hidden">
-        <table class="min-w-full text-sm text-left">
-            <thead class="bg-gray-100 text-gray-700">
-                <tr>
-                    <th class="px-4 py-2">#</th>
-                    <th class="px-4 py-2">Título</th>
-                    <th class="px-4 py-2">Autor</th>
-                    <th class="px-4 py-2">Fecha</th>
-                    <th class="px-4 py-2">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($reportes as $reporte)
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-2">{{ $loop->iteration }}</td>
-                        <td class="px-4 py-2">{{ $reporte->titulo }}</td>
-                        <td class="px-4 py-2">{{ $reporte->autor }}</td>
-                        <td class="px-4 py-2">{{ $reporte->fecha }}</td>
-                        <td class="px-4 py-2">
-                            <form action="{{ route('reportes.destroy', $reporte->id) }}" method="POST" onsubmit="return confirm('¿Eliminar este reporte?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-red-600 hover:text-red-800">🗑️ Eliminar</button>
-                            </form>
-                        </td>
-                    </tr>
-                @endforeach
+        {{-- Gráfico 2: Estados de Miembros --}}
+        <div class="bg-white p-4 rounded shadow">
+            <h2 class="text-lg font-semibold text-blue-700 mb-2">Estados de Miembros</h2>
+            <div class="chart-container" style="position: relative; height:300px; width:100%">
+                <canvas id="graficoEstadosMiembros"></canvas>
+            </div>
+            @if(empty($estadosMiembros))
+                <p class="text-gray-500 text-center mt-4">No hay datos de miembros disponibles</p>
+            @endif
+        </div>
 
-                @if($reportes->isEmpty())
-                    <tr><td colspan="5" class="px-4 py-2 text-center text-gray-500">No hay reportes aún.</td></tr>
-                @endif
-            </tbody>
-        </table>
+        {{-- Botón para ir al reporte de Diezmo --}}
+        <div class="bg-white p-4 rounded shadow flex flex-col items-center justify-center">
+            <h2 class="text-xl font-semibold text-blue-700 mb-4">Diezmo</h2>
+            <p class="text-gray-600 mb-4">Ver reporte de diezmos por persona.</p>
+            <a href="{{ route('reporte.diezmo') }}" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-800">
+                Ver Reporte de Diezmo
+            </a>
+        </div>
     </div>
+
+    
 </div>
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. Gráfico de Ingresos vs Egresos - Versión Mejorada
+        const ctxIE = document.getElementById('graficoIE');
+        const ingresos = {!! json_encode($ingresosMensuales) !!};
+        const egresos = {!! json_encode($egresosMensuales) !!};
+        const meses = {!! json_encode($meses) !!};
+        
+        // Filtramos solo los meses que tienen datos
+        const mesesConDatos = [];
+        const ingresosFiltrados = [];
+        const egresosFiltrados = [];
+        
+        meses.forEach((mes, index) => {
+            if (ingresos[index] > 0 || egresos[index] > 0) {
+                mesesConDatos.push(mes);
+                ingresosFiltrados.push(ingresos[index]);
+                egresosFiltrados.push(egresos[index]);
+            }
+        });
+
+        if (ctxIE && (ingresosFiltrados.length > 0 || egresosFiltrados.length > 0)) {
+            new Chart(ctxIE, {
+                type: 'bar',
+                data: {
+                    labels: mesesConDatos,
+                    datasets: [
+                        {
+                            label: 'Ingresos',
+                            data: ingresosFiltrados,
+                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Egresos',
+                            data: egresosFiltrados,
+                            backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                            borderColor: 'rgba(239, 68, 68, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('es-CO'); // Formato colombiano
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: $${context.raw.toLocaleString('es-CO')}`;
+                                },
+                                title: function(context) {
+                                    return context[0].label;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        } else {
+            console.warn('No hay datos suficientes para mostrar el gráfico de ingresos/egresos');
+        }
+        // 2. Gráfico de Estados de Miembros
+        const ctxEstados = document.getElementById('graficoEstadosMiembros');
+        const estadosData = {!! json_encode($estadosMiembros) !!};
+        const hasDataEstados = Object.keys(estadosData).length > 0;
+        
+        if (ctxEstados && hasDataEstados) {
+            // Configuración de colores para cada estado
+            const estadoColores = {
+                'activo': '#4CAF50',         // Verde
+                'inactivo': '#F44336',       // Rojo
+                'con excusa': '#FFC107',     // Amarillo
+                'borrado': '#607D8B',        // Gris
+                'ausente': '#FF9800',        // Naranja
+                'fallecido': '#9C27B0',      // Morado
+                'trasladado': '#2196F3',     // Azul
+                'no bautizado': '#00BCD4'    // Cyan
+            };
+
+            const labels = Object.keys(estadosData).map(estado => {
+                return estado.charAt(0).toUpperCase() + estado.slice(1);
+            });
+
+            const data = Object.values(estadosData);
+            const backgroundColors = Object.keys(estadosData).map(estado => 
+                estadoColores[estado.toLowerCase()] || '#607D8B'
+            );
+
+            new Chart(ctxEstados, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 20,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const value = context.raw;
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${context.label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
 @endsection

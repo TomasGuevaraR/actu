@@ -29,6 +29,9 @@
         }
     </script>
 </head>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@yield('scripts')
+
 
 <body class="@yield('body-class') bg-gray-100 flex min-h-screen">
 

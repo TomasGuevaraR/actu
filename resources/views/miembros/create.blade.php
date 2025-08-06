@@ -60,8 +60,11 @@
                     <option value="activo" selected>Activo</option>
                     <option value="inactivo">Inactivo</option>
                     <option value="borrado">Borrado</option>
-                    <option value="con excusa permanente">Con excusa permanente</option>
+                    <option value="con excusa">Con excusa/permanente</option>
                     <option value="ausente">Ausente</option>
+                    <option value="fallecido">Fallecido</option>
+                    <option value="trasladado">Trasladado</option>
+                    <option value="trasladado">No Bautizado</option>
                 </select>
             </div>
         </div>

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 15-07-2025 a las 04:18:27
+-- Tiempo de generación: 29-07-2025 a las 05:50:44
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -57,17 +57,23 @@ CREATE TABLE `diezmos` (
   `valor` int(11) NOT NULL,
   `fecha` date NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `movimiento_id` bigint(20) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Volcado de datos para la tabla `diezmos`
 --
 
-INSERT INTO `diezmos` (`id`, `nombre`, `valor`, `fecha`, `created_at`, `updated_at`) VALUES
-(1, 'daniel viloria', 500000, '2025-07-13', '2025-07-14 02:50:29', '2025-07-14 02:50:29'),
-(2, 'tomas guevara', 1000000, '2025-07-13', '2025-07-14 02:50:29', '2025-07-14 02:50:29'),
-(3, 'ruth mora', 60000, '2025-07-13', '2025-07-14 02:50:29', '2025-07-14 02:50:29');
+INSERT INTO `diezmos` (`id`, `nombre`, `valor`, `fecha`, `created_at`, `updated_at`, `movimiento_id`) VALUES
+(1, 'daniel viloria', 500000, '2025-07-13', '2025-07-14 02:50:29', '2025-07-14 02:50:29', NULL),
+(2, 'tomas guevara', 1000000, '2025-07-13', '2025-07-14 02:50:29', '2025-07-14 02:50:29', NULL),
+(3, 'ruth mora', 60000, '2025-07-13', '2025-07-14 02:50:29', '2025-07-14 02:50:29', NULL),
+(4, 'Adiel Guevara', 100000, '2025-07-17', '2025-07-18 01:14:57', '2025-07-18 01:14:57', NULL),
+(5, 'María Pérez', 60000, '2025-07-17', '2025-07-18 01:14:58', '2025-07-18 01:14:58', NULL),
+(7, 'pable G', 200000, '2025-07-21', '2025-07-22 03:42:19', '2025-07-22 03:42:19', 11),
+(8, 'pablo jesus', 1000000, '2025-07-21', '2025-07-22 03:42:19', '2025-07-22 03:42:19', 11),
+(9, 'Ofrenda', 120000, '2025-07-21', '2025-07-22 03:42:19', '2025-07-22 03:42:19', 11);
 
 -- --------------------------------------------------------
 
@@ -172,7 +178,8 @@ CREATE TABLE `miembros` (
 --
 
 INSERT INTO `miembros` (`id`, `nombres`, `apellidos`, `numero_identificacion`, `email`, `telefono`, `fecha_nacimiento`, `edad`, `direccion`, `barrio`, `estado`, `created_at`, `updated_at`) VALUES
-(1, 'Augusto Daniel', 'Viloria Macia', '15614601', 'pastorco626@gmail.com', '3144030728', '1969-06-25', 56, 'MZ J Lot 17', '2 de septiembre', 'activo', '2025-07-03 08:55:59', '2025-07-03 08:55:59');
+(1, 'Augusto Daniel', 'Viloria Macia', '15614601', 'pastorco626@gmail.com', '3144030728', '1969-06-25', 56, 'MZ J Lot 17', '2 de septiembre', 'activo', '2025-07-03 08:55:59', '2025-07-29 06:47:34'),
+(2, 'Tomas Andrés', 'Guevara Ramos', '1063358895', 'tomasguevara2024@gmail.com', '3218721623', '1990-01-03', 35, 'carrera 8G # 6c-30 sur', 'Araujo Viejos', 'activo', '2025-07-28 02:34:17', '2025-07-28 02:34:17');
 
 -- --------------------------------------------------------
 
@@ -208,7 +215,9 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (15, '2025_07_10_173940_remove_descripcion_from_movimientos_table', 9),
 (16, '2025_07_10_221300_make_presupuesto_id_nullable_in_movimientos', 10),
 (17, '2025_07_13_205936_create_diezmos_table', 11),
-(18, '2025_07_13_214912_create_diezmos_table', 12);
+(18, '2025_07_13_214912_create_diezmos_table', 12),
+(19, '2025_07_15_215046_add_movimiento_id_to_diezmos_table', 13),
+(20, '2025_07_25_115357_create_password_reset_tokens_table', 14);
 
 -- --------------------------------------------------------
 
@@ -240,7 +249,28 @@ INSERT INTO `movimientos` (`id`, `presupuesto_id`, `fecha`, `consecutivo`, `tipo
 (4, NULL, '2025-07-10', '124', 'ingreso', 50000.00, -1373500.00, 'Iglesia Templo Unido', 'ofrenda especial', NULL, '2025-07-11 04:35:09', '2025-07-11 04:35:09'),
 (5, NULL, '2025-07-11', '125', 'ingreso', 1000000.00, -373500.00, 'Iglesia Templo Unido', 'ofrenda', NULL, '2025-07-11 17:39:00', '2025-07-11 17:39:00'),
 (7, NULL, '2025-07-13', '126', 'ingreso', 1580000.00, -217000.00, 'Templo Unido', 'escuela dominical', NULL, '2025-07-14 02:50:30', '2025-07-15 03:37:16'),
-(8, NULL, '2025-07-14', '10', 'egreso', 600000.00, -717000.00, 'Daniel Viloria', 'Bonificación Pastor', 'Sueldo Pastor', '2025-07-15 06:07:32', '2025-07-15 06:09:27');
+(8, NULL, '2025-07-14', '10', 'egreso', 600000.00, -717000.00, 'Daniel Viloria', 'Bonificación Pastor', 'Sueldo Pastor', '2025-07-15 06:07:32', '2025-07-15 06:09:27'),
+(11, NULL, '2025-07-21', '131', 'ingreso', 1320000.00, 603000.00, 'Templo Unido', 'diezmo domingo 21', NULL, '2025-07-22 03:42:19', '2025-07-22 03:46:10'),
+(14, 3, '2025-07-24', '13', 'egreso', 500001.00, 102999.00, 'Daniel Viloria', 'Bonificación Pastor 2', 'Sueldo Pastor', '2025-07-25 08:55:46', '2025-07-25 08:55:46');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `password_reset_tokens`
+--
+
+CREATE TABLE `password_reset_tokens` (
+  `email` varchar(255) NOT NULL,
+  `token` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `password_reset_tokens`
+--
+
+INSERT INTO `password_reset_tokens` (`email`, `token`, `created_at`) VALUES
+('tomasguevara2024@gmail.com', '$2y$12$tPXHdiF0ijs027g3lgUZJ.8GqhLbd80Jz3m5QJNwX2ux9QU.Fvvw2', '2025-07-26 06:16:55');
 
 -- --------------------------------------------------------
 
@@ -286,7 +316,7 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('6NMBDqniJ7IjY5FCFjQ4I8R3HOGwXFo2xCPg53aq', 5, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiRm5xMzFxSVBwRWdaS0o3c2NhZlpGTjZZb1JZSEpiOG9hRWxBR3kxbSI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjI5OiJodHRwOi8vbG9jYWxob3N0OjgwMDAvZGllem1vcyI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjU7fQ==', 1752542225);
+('BjMC8J2hrrIujSejogmj0noo3BwBHizE2UMFxLrs', 5, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiQkVrRVJXNllFcGlkYWFvTXRZODdRODFQc25SWFd1ZVF0UHJlRENyOSI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6MzE6Imh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9kYXNoYm9hcmQiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aTo1O30=', 1753760974);
 
 -- --------------------------------------------------------
 
@@ -311,8 +341,8 @@ CREATE TABLE `usuarios` (
 --
 
 INSERT INTO `usuarios` (`id`, `nombre`, `numero_identificacion`, `email`, `password`, `rol`, `created_at`, `updated_at`, `estado`) VALUES
-(4, 'Tomas Guevara', '1063358895', 'tomasguevara2024@gmail.com', '$2y$12$0dwxDovLB/.kZBw7pUMrBe2j07.OB5MTdoRMhoP8d8JcLiLDJePie', 'pastor', '2025-07-03 08:31:06', '2025-07-03 08:38:06', 'inactivo'),
-(5, 'Daniel Viloria', '15614601', 'pastorco626@gmail.com', '$2y$12$p0HZHWjcGDsOxPuX0CXVtuFEfUyYJTWkFJXk1X3LNn096wrhpC3IW', 'pastor', '2025-07-03 08:37:42', '2025-07-03 08:37:42', 'activo');
+(4, 'Tomas Guevara', '1063358895', 'tomasguevara2024@gmail.com', '$2y$12$3yIl8ffYloXpsddgvTc7UelWqEfZmtWqq1TwcpxiqFvzuwMn/qYWq', 'pastor', '2025-07-03 08:31:06', '2025-07-28 02:30:39', 'activo'),
+(5, 'Daniel V', '15614601', 'pastorco626@gmail.com', '$2y$12$p0HZHWjcGDsOxPuX0CXVtuFEfUyYJTWkFJXk1X3LNn096wrhpC3IW', 'pastor', '2025-07-03 08:37:42', '2025-07-29 06:47:33', 'activo');
 
 --
 -- Índices para tablas volcadas
@@ -334,7 +364,8 @@ ALTER TABLE `cache_locks`
 -- Indices de la tabla `diezmos`
 --
 ALTER TABLE `diezmos`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `diezmos_movimiento_id_foreign` (`movimiento_id`);
 
 --
 -- Indices de la tabla `estados`
@@ -382,6 +413,12 @@ ALTER TABLE `movimientos`
   ADD KEY `movimientos_presupuesto_id_foreign` (`presupuesto_id`);
 
 --
+-- Indices de la tabla `password_reset_tokens`
+--
+ALTER TABLE `password_reset_tokens`
+  ADD KEY `password_reset_tokens_email_index` (`email`);
+
+--
 -- Indices de la tabla `presupuestos`
 --
 ALTER TABLE `presupuestos`
@@ -411,7 +448,7 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `diezmos`
 --
 ALTER TABLE `diezmos`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT de la tabla `estados`
@@ -435,19 +472,19 @@ ALTER TABLE `jobs`
 -- AUTO_INCREMENT de la tabla `miembros`
 --
 ALTER TABLE `miembros`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT de la tabla `movimientos`
 --
 ALTER TABLE `movimientos`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT de la tabla `presupuestos`
@@ -464,6 +501,12 @@ ALTER TABLE `usuarios`
 --
 -- Restricciones para tablas volcadas
 --
+
+--
+-- Filtros para la tabla `diezmos`
+--
+ALTER TABLE `diezmos`
+  ADD CONSTRAINT `diezmos_movimiento_id_foreign` FOREIGN KEY (`movimiento_id`) REFERENCES `movimientos` (`id`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `movimientos`

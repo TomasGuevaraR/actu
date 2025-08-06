@@ -61,8 +61,12 @@
                     <option value="activo" {{ $miembro->estado == 'activo' ? 'selected' : '' }}>Activo</option>
                     <option value="inactivo" {{ $miembro->estado == 'inactivo' ? 'selected' : '' }}>Inactivo</option>
                     <option value="borrado" {{ $miembro->estado == 'borrado' ? 'selected' : '' }}>Borrado</option>
-                    <option value="con excusa permanente" {{ $miembro->estado == 'con excusa permanente' ? 'selected' : '' }}>Con excusa permanente</option>
+                    <option value="con excusa" {{ $miembro->estado == 'con excusa' ? 'selected' : '' }}>Con excusa/permanente</option>
                     <option value="ausente" {{ $miembro->estado == 'ausente' ? 'selected' : '' }}>Ausente</option>
+                    <option value="fallecido" {{ $miembro->estado == 'fallecido' ? 'selected' : '' }}>Fallecido</option>
+                    <option value="trasladado" {{ $miembro->estado == 'trasladado' ? 'selected' : '' }}>Trasladado</option>
+                    <option value="no bautizado" {{ $miembro->estado == 'no bautizado' ? 'selected' : '' }}>No Bautizado</option>
+
                 </select>
             </div>
         </div>
