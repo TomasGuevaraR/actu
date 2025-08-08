@@ -73,6 +73,12 @@
                 <i class="fas fa-users text-purple-400"></i>
                 <span class="menu-label">Miembros</span>
             </a>
+
+            <a href="{{ route('diezmo.index') }}" class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
+                <i class="fas fa-users text-purple-400"></i>
+                <span class="menu-label">Diezmos/Ofrendas</span>
+            </a>
+
             <a href="{{ route('usuarios.index') }}" class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
                 <i class="fas fa-user-gear text-pink-400"></i>
                 <span class="menu-label">Usuarios</span>

@@ -9,6 +9,10 @@ use App\Models\Diezmo;
 use App\Models\Miembro;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\DiezmoExport;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Carbon\Carbon;
+
+
 
 class ReporteController extends Controller
 {
@@ -79,14 +83,13 @@ class ReporteController extends Controller
         }
     }
 
+    // DETALLE – Reporte agrupado por nombre y fecha
     public function diezmo(Request $request)
     {
-        // Obtener nombres de miembros registrados
         $miembros = Miembro::selectRaw("CONCAT(nombres, ' ', apellidos) AS nombre_completo")
             ->orderBy('nombres')
             ->pluck('nombre_completo');
 
-        // Consulta base de diezmos
         $query = Diezmo::query()
             ->select([
                 'nombre',
@@ -100,26 +103,69 @@ class ReporteController extends Controller
         if ($request->filled('nombre')) {
             $query->where('nombre', 'like', '%' . $request->nombre . '%');
         }
-
         if ($request->filled('fecha')) {
             $query->whereDate('fecha', $request->fecha);
         }
-
         if ($request->filled('mes')) {
             $query->whereMonth('fecha', $request->mes);
         }
-
         if ($request->filled('anio')) {
             $query->whereYear('fecha', $request->anio);
         }
 
         $diezmos = $query->get();
+        $total = $diezmos->sum('total');
 
-        return view('reporte.diezmo', compact('diezmos', 'miembros'));
+        return view('reporte.diezmo', compact('diezmos', 'miembros', 'total'));
+    }
+    // EXPORTAR – Reporte a Excel
+    public function exportarCSV(Request $request)
+{
+    $query = Diezmo::query()->select('nombre', 'valor', 'fecha');
+
+    // Aplicar filtros enviados desde el formulario
+    if ($request->filled('nombre')) {
+        $query->where('nombre', 'like', '%' . $request->nombre . '%');
+    }
+    if ($request->filled('fecha')) {
+        $query->whereDate('fecha', $request->fecha);
+    }
+    if ($request->filled('mes')) {
+        $query->whereMonth('fecha', $request->mes);
+    }
+    if ($request->filled('anio')) {
+        $query->whereYear('fecha', $request->anio);
     }
 
-    public function exportarExcel(Request $request)
-{
-    return Excel::download(new DiezmoExport($request), 'reporte_diezmos.xlsx');
+    // Ya no aplicar la última fecha automáticamente.
+    // Si no hay resultados, se exporta vacío (como debe ser con los filtros aplicados)
+    $diezmos = $query->orderBy('nombre')->get();
+
+    $response = new StreamedResponse(function () use ($diezmos) {
+        $handle = fopen('php://output', 'w');
+        fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM para Excel
+
+        // Cabeceras
+        fputcsv($handle, ['Nombre', 'Valor', 'Fecha'], ';');
+
+        foreach ($diezmos as $diezmo) {
+            fputcsv($handle, [
+                $diezmo->nombre,
+                $diezmo->valor,
+                Carbon::parse($diezmo->fecha)->format('d/m/Y'),
+            ], ';');
+        }
+
+        fclose($handle);
+    });
+
+    $filename = 'reporte_diezmos_' . now()->format('Ymd_His') . '.csv';
+
+    $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+    $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+
+    return $response;
 }
+
+
 }

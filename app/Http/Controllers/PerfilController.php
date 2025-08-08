@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Miembro;
 use Carbon\Carbon;
@@ -27,6 +28,7 @@ class PerfilController extends Controller
             'nombre' => 'required|string|max:255',
             'numero_identificacion' => 'required|string|max:50',
             'email' => 'required|email|max:255',
+            'password' => 'nullable|string|min:8|confirmed', // ✔ validación de nueva contraseña
 
             // Validaciones para Miembro
             'nombres' => 'required|string|max:255',
@@ -37,13 +39,20 @@ class PerfilController extends Controller
             'barrio' => 'nullable|string|max:255',
         ]);
 
-        // Actualizar modelo User (rol fijo)
-        $usuario->update([
+        // Datos base del usuario
+        $dataUsuario = [
             'nombre' => $request->nombre,
             'numero_identificacion' => $request->numero_identificacion,
             'email' => $request->email,
             'rol' => $usuario->rol, // mantener rol actual
-        ]);
+        ];
+
+        // Si se quiere cambiar la contraseña
+        if ($request->filled('password')) {
+            $dataUsuario['password'] = Hash::make($request->password);
+        }
+
+        $usuario->update($dataUsuario);
 
         // Buscar Miembro
         $miembro = Miembro::where('numero_identificacion', $usuario->numero_identificacion)->first();
@@ -67,7 +76,9 @@ class PerfilController extends Controller
             ]);
         }
 
-        return redirect()->route('mi-perfil.index')->with('success', 'Perfil actualizado correctamente.');
+        return redirect()->back()->with('success', 'El perfil fue actualizado.');
+
+
     }
 
     public function getUsuarioJson($id)

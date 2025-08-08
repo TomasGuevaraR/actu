@@ -42,8 +42,9 @@
 
             <div>
                 <label>Edad</label>
-                <input type="number" name="edad" value="{{ old('edad', $miembro->edad) }}" class="w-full border rounded p-2">
+                <input type="number" name="edad" id="edad" class="w-full border rounded p-2" readonly>
             </div>
+
 
             <div class="col-span-2">
                 <label>Dirección</label>
@@ -118,4 +119,36 @@
         });
     });
 </script>
+<!-- Script para calcular la edad automáticamente -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const fechaNacimientoInput = document.querySelector('input[name="fecha_nacimiento"]');
+        const edadInput = document.getElementById('edad');
+
+        function calcularEdad(fechaNacimiento) {
+            const hoy = new Date();
+            const nacimiento = new Date(fechaNacimiento);
+            let edad = hoy.getFullYear() - nacimiento.getFullYear();
+            const mes = hoy.getMonth() - nacimiento.getMonth();
+
+            if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+                edad--;
+            }
+
+            return edad;
+        }
+
+        // Si ya hay una fecha de nacimiento cargada (por ejemplo al editar)
+        if (fechaNacimientoInput.value) {
+            edadInput.value = calcularEdad(fechaNacimientoInput.value);
+        }
+
+        // Escuchar cambios en la fecha de nacimiento
+        fechaNacimientoInput.addEventListener('change', function () {
+            const edad = calcularEdad(this.value);
+            edadInput.value = edad >= 0 ? edad : '';
+        });
+    });
+</script>
+
 @endsection

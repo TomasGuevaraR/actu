@@ -5,7 +5,7 @@
     <div class="max-w-4xl mx-auto bg-white shadow-md rounded-lg p-6">
         <h2 class="text-2xl font-bold text-[#198754] text-center mb-6">Registrar Diezmo y Ofrenda</h2>
 
-        <form id="formDiezmo" action="{{ route('diezmos.store') }}" method="POST">
+        <form id="formDiezmo" action="{{ route('diezmo.store') }}" method="POST">
             @csrf
 
             <!-- Fecha -->

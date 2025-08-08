@@ -74,22 +74,23 @@ Route::post('/estado/saldo-inicial', [EstadoController::class, 'guardarSaldoInic
         return view('mi_perfil.index', compact('usuario', 'miembro'));
     })->name('mi-perfil.index');
     Route::put('mi-perfil/actualizar', [PerfilController::class, 'update'])->name('mi-perfil.actualizar');
-
-
     Route::get('/mi-perfil/editar', [PerfilController::class, 'edit'])->name('mi-perfil.edit');
     Route::post('/mi-perfil/actualizar', [PerfilController::class, 'update'])->name('mi-perfil.update');
+
+
 
     // Reporte
     Route::get('/reporte', [ReporteController::class, 'index'])->name('reporte.index');
     Route::post('/reportes', [ReporteController::class, 'store'])->name('reportes.store');
     Route::delete('/reportes/{id}', [ReporteController::class, 'destroy'])->name('reportes.destroy');
 });Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
-Route::get('/reporte/estado-financiero', [ReporteController::class, 'estadoFinanciero'])->name('reporte.estado-financiero');
-Route::get('/reporte/entradas', [ReporteController::class, 'entradas'])->name('reporte.entradas');
-Route::get('/reporte/salidas', [ReporteController::class, 'salidas'])->name('reporte.salidas');
-Route::get('/reportes/casillas', [ReporteController::class, 'casillas'])->name('reporte.casillas');
 Route::get('/reporte/diezmo', [ReporteController::class, 'diezmo'])->name('reporte.diezmo');
-Route::get('/reporte/diezmos/exportar', [ReporteController::class, 'exportarExcel'])->name('reporte.diezmos.excel');
+Route::get('/reporte/diezmos/excel', [ReporteController::class, 'exportarCSV'])->name('reporte.diezmos.excel');
+Route::get('/reporte/diezmo', [ReporteController::class, 'diezmo'])->name('reporte.diezmo');
+Route::get('/reporte', [ReporteController::class, 'index'])->name('reporte.index');
+
+
+
 
 
 // RUTAS GENERADAS AUTOMÁTICAMENTE POR BREEZE U OTRO SISTEMA
@@ -109,5 +110,6 @@ Route::post('/ingresos/store', [IngresoController::class, 'store'])->name('ingre
 
 
 // Rutas para Diezmos y Ofrendas
-Route::get('/diezmos', [DiezmoController::class, 'index'])->name('diezmos.index');
-Route::resource('diezmos', DiezmoController::class);
+Route::get('/diezmo', [DiezmoController::class, 'index'])->name('diezmo.index');
+Route::post('/diezmo', [DiezmoController::class, 'store'])->name('diezmo.store');
+

@@ -58,36 +58,39 @@
         ];
 
         $modulosSegundaFila = [
+            ['titulo' => 'Diezmos y Ofrendas', 'icono' => 'fa-hand-holding-heart', 'color' => 'text-green-500', 'ruta' => route('diezmo.index')],
             ['titulo' => 'Usuarios', 'icono' => 'fa-user-shield', 'color' => 'text-indigo-600', 'ruta' => route('usuarios.index')],
             ['titulo' => 'Reportes', 'icono' => 'fa-chart-bar', 'color' => 'text-purple-600', 'ruta' => route('reporte.index')],
             ['titulo' => 'Mi Usuario', 'icono' => 'fa-user', 'color' => 'text-pink-500', 'ruta' => route('mi-perfil.index')],
         ];
     @endphp
 
-    <!-- Primera fila (4 módulos) -->
-    <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-6 w-full justify-center mb-6">
-        @foreach ($modulosPrimeraFila as $modulo)
-            <a href="{{ $modulo['ruta'] }}" class="bg-white shadow-md rounded-xl p-4 h-40 flex flex-col justify-center items-center text-center transform transition hover:scale-105 hover:shadow-lg">
-                <div class="text-3xl mb-2">
-                    <i class="fas {{ $modulo['icono'] }} {{ $modulo['color'] }}"></i>
-                </div>
-                <h2 class="text-sm font-semibold text-gray-700">{{ $modulo['titulo'] }}</h2>
-            </a>
-        @endforeach
-    </div>
-
-<!-- Segunda fila (3 módulos más angostos y centrados) -->
-<div class="flex justify-center gap-6">
-    @foreach ($modulosSegundaFila as $modulo)
+    <!-- Primera fila (4 módulos más pequeños) -->
+<div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 w-[990px] justify-center mb-4">
+    @foreach ($modulosPrimeraFila as $modulo)
         <a href="{{ $modulo['ruta'] }}"
-            class="bg-white shadow-md rounded-xl p-4 h-40 w-[290px] flex flex-col justify-center items-center text-center transform transition hover:scale-105 hover:shadow-lg">
-            <div class="text-3xl mb-2">
+            class="bg-white shadow-md rounded-xl p-4 h-40 flex flex-col justify-center items-center text-center transform transition hover:scale-110 hover:shadow-2xl">
+            <div class="text-4xl mb-3">
                 <i class="fas {{ $modulo['icono'] }} {{ $modulo['color'] }}"></i>
             </div>
-            <h2 class="text-sm font-semibold text-gray-700">{{ $modulo['titulo'] }}</h2>
+            <h2 class="text-base font-semibold text-gray-700">{{ $modulo['titulo'] }}</h2>
         </a>
     @endforeach
 </div>
+
+<!-- Segunda fila (mismos tamaños, ícono de Diezmo con color diferente) -->
+<div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 w-[990px] justify-center mb-4">
+    @foreach ($modulosSegundaFila as $modulo)
+        <a href="{{ $modulo['ruta'] }}"
+            class="bg-white shadow-md rounded-xl p-4 h-40 flex flex-col justify-center items-center text-center transform transition hover:scale-110 hover:shadow-2xl">
+            <div class="text-4xl mb-3">
+                <i class="fas {{ $modulo['icono'] }} {{ $modulo['color'] }}"></i>
+            </div>
+            <h2 class="text-base font-semibold text-gray-700">{{ $modulo['titulo'] }}</h2>
+        </a>
+    @endforeach
+</div>
+
 </div>
 @endsection
 

@@ -56,13 +56,13 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Fecha de Nacimiento</label>
-                    <input type="date" name="fecha_nacimiento" value="{{ old('fecha_nacimiento', $miembro->fecha_nacimiento ?? '') }}"
+                    <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" value="{{ old('fecha_nacimiento', $miembro->fecha_nacimiento ?? '') }}"
                         class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Edad</label>
-                    <input type="text" value="{{ $miembro->edad }}" readonly
+                    <input type="text" id="edad" value="{{ $miembro->edad }}" readonly
                         class="mt-1 block w-full bg-gray-100 border-gray-300 rounded-md shadow-sm">
                 </div>
 
@@ -86,17 +86,86 @@
                 </div>
             </div>
 
+            <hr class="my-6 col-span-2">
+
+            <div class="col-span-2">
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">Cambiar Contraseña (opcional)</h3>
+            </div>
+
+            <div class="flex space-x-4">
+                <div class="w-1/2">
+                    <label class="block text-sm font-medium text-gray-700">Nueva Contraseña</label>
+                    <input type="password" name="password"
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm py-2 px-3">
+                </div>
+
+                <div class="w-1/2">
+                    <label class="block text-sm font-medium text-gray-700">Confirmar Nueva Contraseña</label>
+                    <input type="password" name="password_confirmation"
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm py-2 px-3">
+                </div>
+            </div>
+
             <div class="mt-8 flex justify-between">
                 <a href="{{ route('mi-perfil.index') }}"
                     class="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-6 rounded-full shadow">
                     Cancelar
                 </a>
                 <button type="submit"
-                        class="bg-[#0166b3] hover:bg-[#014a82] text-white py-2 px-6 rounded-full shadow">
+                    class="bg-[#0166b3] hover:bg-[#014a82] text-white py-2 px-6 rounded-full shadow">
                     Guardar Cambios
                 </button>
             </div>
         </form>
     </div>
 </div>
+
+{{-- ALERTA DE ÉXITO --}}
+@if (session('success'))
+    <div id="success-alert"
+        class="fixed bottom-6 right-6 bg-green-100 border border-green-400 text-green-700 px-5 py-3 rounded-md shadow-md z-50 animate-fade-in">
+        <strong>¡Éxito!</strong> {{ session('success') }}
+    </div>
+
+    <script>
+        setTimeout(() => {
+            const alert = document.getElementById('success-alert');
+            if (alert) {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            }
+        }, 3000);
+    </script>
+
+    <style>
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-in {
+            animation: fade-in 0.5s ease-out;
+        }
+    </style>
+@endif
+
+{{-- SCRIPT PARA CALCULAR EDAD --}}
+<script>
+    document.getElementById('fecha_nacimiento')?.addEventListener('change', function () {
+        const input = this.value;
+        if (!input) return;
+
+        const fechaNacimiento = new Date(input);
+        const hoy = new Date();
+        let edad = hoy.getFullYear() - fechaNacimiento.getFullYear();
+        const mes = hoy.getMonth() - fechaNacimiento.getMonth();
+
+        if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNacimiento.getDate())) {
+            edad--;
+        }
+
+        document.getElementById('edad').value = edad;
+    });
+</script>
+
 @endsection
