@@ -3,7 +3,14 @@
 
 @section('content')
 <div class="max-w-3xl mx-auto mt-10 bg-white p-6 rounded shadow-md">
-    <h2 class="text-2xl font-bold text-[#0166b3] mb-6">Agregar Nuevo Miembro</h2>
+    <a href="{{ route('miembros.index') }}" 
+        class="inline-flex items-center px-4 py-2 bg-[#0166b3] text-white text-sm font-medium rounded hover:bg-[#014c86] transition">
+        <i class="fas fa-arrow-left mr-2"></i> Volver
+    </a>
+    <h2 class="text-2xl font-bold text-[#0166b3] text-center mb-6">
+    Agregar Nuevo Miembro
+    </h2>
+
 
     <form action="{{ route('miembros.store') }}" method="POST" id="form-miembro">
         @csrf
@@ -65,6 +72,7 @@
                     <option value="fallecido">Fallecido</option>
                     <option value="trasladado">Trasladado</option>
                     <option value="trasladado">No Bautizado</option>
+                    <option value="disciplina">Disciplina</option>
                 </select>
             </div>
         </div>

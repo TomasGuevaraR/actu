@@ -10,6 +10,10 @@
         <div class="col-lg-12">
             <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
                 <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between px-4 py-3">
+                    <a href="{{ route('presupuestos.index') }}" 
+                            class="inline-flex items-center px-4 py-2 bg-[#0166b3] text-white text-sm font-medium rounded hover:bg-[#014c86] transition">
+                            <i class="fas fa-arrow-left mr-2"></i> Volver
+                        </a>
                     <h4 class="mb-0 fw-bold text-primary">
                         <i class="bi bi-calculator-fill me-2"></i> Nueva Casilla de Presupuesto
                     </h4>

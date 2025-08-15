@@ -60,7 +60,7 @@ class ReporteController extends Controller
             $estadosMiembros = Miembro::select('estado', DB::raw('COUNT(*) as total'))
                 ->whereIn('estado', [
                     'activo', 'inactivo', 'con excusa', 'borrado',
-                    'ausente', 'fallecido', 'trasladado', 'no bautizado'
+                    'ausente', 'fallecido', 'trasladado', 'no bautizado', 'disciplina',
                 ])
                 ->groupBy('estado')
                 ->orderBy('total', 'desc')

@@ -1,28 +1,44 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $rolUsuario = Auth::user()->rol ?? ''; // Cambia 'rol' si tu campo se llama diferente
+@endphp
+
+@if ($rolUsuario === 'secretario')
+    <div class="container py-5">
+        <div class="text-center text-red-600 text-xl font-bold">
+            🚫 No tienes permisos para acceder al Libro Contable.
+        </div>
+    </div>
+@else
 <div class="container py-5">
+    
     <!-- Encabezado -->
     <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4 px-4 pt-4">
+        <div class="flex justify-start">
+            <a href="{{ route('dashboard') }}" 
+                class="inline-flex items-center px-4 py-2 bg-[#0166b3] text-white text-sm font-medium rounded hover:bg-[#014c86] transition">
+                <i class="fas fa-arrow-left mr-2"></i> Volver
+            </a>
+        </div>
         <h1 class="text-2xl font-bold text-[#0166b3]">
             <i class="bi bi-journal-text me-2"></i> Libro Contable
         </h1>
 
-        <!-- Botones -->
-        <div class="flex flex-col md:flex-row md:items-center gap-4 w-full md:w-auto">
-            <a href="{{ route('ingresos.create') }}"
-                class="bg-[#0d6efd] hover:bg-[#014a82] text-white font-bold py-2 px-4 rounded-full transition duration-300 shadow-md">
-                ➕ Ingreso
-            </a>
-            <a href="{{ route('egresos.create') }}"
-                class="bg-[#dc3545] hover:bg-[#a71d2a] text-white font-bold py-2 px-4 rounded-full transition duration-300 shadow-md">
-                ➖ Egreso
-            </a>
-            <a href="{{ route('diezmos.index') }}"
-                class="bg-[#198754] hover:bg-[#146c43] text-white font-bold py-2 px-4 rounded-full transition duration-300 shadow-md">
-                💰 Diezmo y Ofrenda
-            </a>
-        </div>
+        <!-- Botones solo para tesorero -->
+        @if ($rolUsuario === 'tesorero')
+            <div class="flex flex-col md:flex-row md:items-center gap-4 w-full md:w-auto">
+                <a href="{{ route('ingresos.create') }}"
+                    class="bg-[#0d6efd] hover:bg-[#014a82] text-white font-bold py-2 px-4 rounded-full transition duration-300 shadow-md">
+                    ➕ Ingreso
+                </a>
+                <a href="{{ route('egresos.create') }}"
+                    class="bg-[#dc3545] hover:bg-[#a71d2a] text-white font-bold py-2 px-4 rounded-full transition duration-300 shadow-md">
+                    ➖ Egreso
+                </a>
+            </div>
+        @endif
     </div>
 
     <!-- Tabla -->
@@ -40,7 +56,9 @@
                         <th class="py-2 px-4 border">Entrada</th>
                         <th class="py-2 px-4 border">Salida</th>
                         <th class="py-2 px-4 border">Saldo</th>
-                        <th class="py-2 px-4 border">Acciones</th>
+                        @if ($rolUsuario === 'tesorero')
+                            <th class="py-2 px-4 border">Acciones</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody class="text-sm text-gray-700">
@@ -75,21 +93,23 @@
                             <td class="py-2 px-4 border fw-semibold">
                                 {{ number_format($mov->saldo_actual ?? 0, 0, ',', '.') }}
                             </td>
-                                <!-- Acciones -->
-                            <td class="py-2 px-4 border text-center">
-                                <a href="{{ route('movimientos.edit', $mov->id) }}" class="text-blue-600 hover:text-blue-800 mx-1" title="Editar">
-                                    ✏️
-                                </a>
-                                <form action="{{ route('movimientos.destroy', $mov->id) }}" method="POST" class="inline-block" onsubmit="return confirm('¿Eliminar este movimiento?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-800 mx-1" title="Eliminar">🗑️</button>
-                                </form>
-                            </td>
+                            
+                            @if ($rolUsuario === 'tesorero')
+                                <td class="py-2 px-4 border text-center">
+                                    <a href="{{ route('movimientos.edit', $mov->id) }}" class="text-blue-600 hover:text-blue-800 mx-1" title="Editar">
+                                        ✏️
+                                    </a>
+                                    <form action="{{ route('movimientos.destroy', $mov->id) }}" method="POST" class="inline-block" onsubmit="return confirm('¿Eliminar este movimiento?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-600 hover:text-red-800 mx-1" title="Eliminar">🗑️</button>
+                                    </form>
+                                </td>
+                            @endif
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="text-center py-4 text-gray-500">No hay movimientos registrados.</td>
+                            <td colspan="{{ $rolUsuario === 'tesorero' ? 10 : 9 }}" class="text-center py-4 text-gray-500">No hay movimientos registrados.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -101,7 +121,9 @@
                         <td class="py-2 px-4 text-green-700">{{ number_format($totalEntradas, 0, ',', '.') }}</td>
                         <td class="py-2 px-4 text-red-700">{{ number_format($totalSalidas, 0, ',', '.') }}</td>
                         <td class="py-2 px-4 text-black">{{ number_format($saldoFinal, 0, ',', '.') }}</td>
-                        <td class="py-2 px-4">—</td>
+                        @if ($rolUsuario === 'tesorero')
+                            <td class="py-2 px-4">—</td>
+                        @endif
                     </tr>
                 </tfoot>
 
@@ -109,6 +131,7 @@
         </div>
     </div>
 </div>
+@endif
 @endsection
 
 @if (session('success'))
@@ -120,7 +143,6 @@
     </div>
 
     <script>
-        // Ocultar el toast después de 3 segundos
         setTimeout(() => {
             const toast = document.getElementById('toast');
             if (toast) {
@@ -129,7 +151,4 @@
             }
         }, 3000);
     </script>
-
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 @endif

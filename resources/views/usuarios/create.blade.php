@@ -9,17 +9,22 @@
     <div class="row justify-content-center">
         <div class="col-lg-12">
             <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
-                <div class="card-header bg-gradient-primary text-white py-3">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <h4 class="mb-0 fw-bold">
-                            <i class="bi bi-person-plus me-2"></i>
-                            <span style="color: #0d6efd;">Crear Nuevo Usuario</span>
-                        </h4>
-                        <a href="{{ route('usuarios.index') }}" class="btn btn-sm btn-primary rounded-pill" style="background-color: #0d6efd; border-color: #0d6efd;">
-                            <i class="bi bi-arrow-left me-1"></i> Volver
-                        </a>
-                    </div>
+                <div class="card-header bg-gradient-primary text-white py-3 position-relative">
+                <div class="d-flex align-items-center">
+                    {{-- Botón Volver a la izquierda --}}
+                    <a href="{{ route('usuarios.index') }}" 
+                    class="btn btn-sm btn-primary rounded-pill me-2" 
+                    style="background-color: #0d6efd; border-color: #0d6efd;">
+                        <i class="bi bi-arrow-left me-1"></i> Volver
+                    </a>
+
+                    {{-- Título centrado y más grande --}}
+                    <h2 class="fw-bold m-0 position-absolute top-50 start-50 translate-middle text-center" style="font-size: 1.8rem;">
+                        <i class="bi bi-person-plus me-2"></i>
+                        <span style="color: #0d6efd;">Crear Nuevo Usuario</span>
+                    </h2>
                 </div>
+            </div>
 
                 <div class="card-body p-4 p-md-5">
                     @if ($errors->any())

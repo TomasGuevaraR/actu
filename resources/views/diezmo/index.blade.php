@@ -1,9 +1,21 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $rolUsuario = Auth::user()->rol ?? '';
+@endphp
+
+@if (in_array($rolUsuario, ['tesorero', 'anciano']))
 <div class="container py-5">
     <div class="max-w-4xl mx-auto bg-white shadow-md rounded-lg p-6">
-        <h2 class="text-2xl font-bold text-[#198754] text-center mb-6">Registrar Diezmo y Ofrenda</h2>
+        <a href="{{ route('dashboard') }}" 
+            class="inline-flex items-center px-4 py-2 bg-[#0166b3] text-white text-sm font-medium rounded hover:bg-[#014c86] transition">
+            <i class="fas fa-arrow-left mr-2"></i> Volver
+        </a>
+        
+        <h2 class="text-2xl font-bold text-[#198754] text-center mb-6">
+            Registrar Diezmo y Ofrenda
+        </h2>
 
         <form id="formDiezmo" action="{{ route('diezmo.store') }}" method="POST">
             @csrf
@@ -71,7 +83,7 @@
     @endforeach
 </datalist>
 
-<!-- Scripts para lógica dinámica -->
+<!-- Scripts -->
 <script>
     function agregarDiezmo() {
         const container = document.getElementById('diezmoList');
@@ -88,9 +100,7 @@
         actualizarTotales();
     }
 
-    document.addEventListener('input', function () {
-        actualizarTotales();
-    });
+    document.addEventListener('input', actualizarTotales);
 
     function actualizarTotales() {
         let totalDiezmos = 0;
@@ -105,9 +115,11 @@
         document.getElementById('totalGeneral').value = total.toLocaleString();
     }
 
-    // Agrega un campo al cargar
-    window.addEventListener('DOMContentLoaded', () => {
-        agregarDiezmo();
-    });
+    window.addEventListener('DOMContentLoaded', agregarDiezmo);
 </script>
+@else
+<div class="container py-5 text-center">
+    <h2 class="text-red-600 font-bold">🚫 No tienes permisos para acceder a este módulo.</h2>
+</div>
+@endif
 @endsection

@@ -2,8 +2,18 @@
 
 @section('content')
 <div class="container mx-auto p-6">
-    <div class="bg-white rounded-xl shadow-md p-8 max-w-3xl mx-auto text-center">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6">Mi Perfil</h2>
+    <div class="bg-white rounded-xl shadow-md p-8 max-w-3xl mx-auto">
+
+        {{-- Botón Volver alineado a la izquierda --}}
+        <div class="flex justify-start mb-4">
+            <a href="{{ route('dashboard') }}" 
+                class="inline-flex items-center px-4 py-2 bg-[#0166b3] text-white text-sm font-medium rounded hover:bg-[#014c86] transition">
+                <i class="fas fa-arrow-left mr-2"></i> Volver
+            </a>
+        </div>
+        
+        {{-- Título centrado --}}
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Mi Perfil</h2>
 
         {{-- DATOS DEL USUARIO --}}
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left">
@@ -69,10 +79,12 @@
         @endif
 
         {{-- BOTÓN EDITAR --}}
-        <a href="{{ route('mi-perfil.edit') }}"
-            class="bg-[#0166b3] hover:bg-[#014a82] text-white py-2 px-6 rounded-full shadow inline-block mt-6">
-            Editar perfil
-        </a>
+        <div class="text-center">
+            <a href="{{ route('mi-perfil.edit') }}"
+                class="bg-[#0166b3] hover:bg-[#014a82] text-white py-2 px-6 rounded-full shadow inline-block mt-6">
+                Editar perfil
+            </a>
+        </div>
     </div>
 </div>
 @endsection

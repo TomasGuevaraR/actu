@@ -5,6 +5,14 @@
     <div class="bg-white rounded-xl shadow-md p-8 max-w-3xl mx-auto">
         <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Editar Perfil</h2>
 
+        {{-- Botón Volver alineado a la izquierda --}}
+        <div class="flex justify-start mb-4">
+            <a href="{{ route('mi-perfil.index') }}" 
+                class="inline-flex items-center px-4 py-2 bg-[#0166b3] text-white text-sm font-medium rounded hover:bg-[#014c86] transition">
+                <i class="fas fa-arrow-left mr-2"></i> Volver
+            </a>
+        </div>
+
         <form method="POST" action="{{ route('mi-perfil.update') }}">
             @csrf
             @method('PUT')

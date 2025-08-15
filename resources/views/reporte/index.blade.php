@@ -1,8 +1,20 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $rolUsuario = Auth::user()->rol ?? '';
+@endphp
+
+@if ($rolUsuario !== 'secretario')
 <div class="container mx-auto px-4 py-6">
     <h1 class="text-3xl font-bold text-blue-700 mb-6 text-center">Reportes Generales</h1>
+    {{-- Botón Volver alineado a la izquierda --}}
+    <div class="flex justify-start mb-4">
+        <a href="{{ route('dashboard') }}" 
+            class="inline-flex items-center px-4 py-2 bg-[#0166b3] text-white text-sm font-medium rounded hover:bg-[#014c86] transition">
+            <i class="fas fa-arrow-left mr-2"></i> Volver
+        </a>
+    </div>
 
     {{-- Filtro por Año --}}
     <form method="GET" action="{{ route('reporte.index') }}" class="mb-8 flex justify-center items-center gap-4">
@@ -52,26 +64,33 @@
             </a>
         </div>
     </div>
-
-    
 </div>
+@else
+<div class="container mx-auto px-4 py-6 text-center">
+    <h1 class="text-2xl font-bold text-red-600">Acceso denegado</h1>
+    <p class="text-gray-700 mt-2">No tienes permisos para acceder a esta sección.</p>
+    <a href="{{ route('dashboard') }}" 
+       class="inline-flex items-center mt-4 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-800 transition">
+        <i class="fas fa-arrow-left mr-2"></i> Volver al Dashboard
+    </a>
+</div>
+@endif
 @endsection
 
 @section('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // 1. Gráfico de Ingresos vs Egresos - Versión Mejorada
+        // 1. Gráfico de Ingresos vs Egresos
         const ctxIE = document.getElementById('graficoIE');
         const ingresos = {!! json_encode($ingresosMensuales) !!};
         const egresos = {!! json_encode($egresosMensuales) !!};
         const meses = {!! json_encode($meses) !!};
-        
-        // Filtramos solo los meses que tienen datos
+
         const mesesConDatos = [];
         const ingresosFiltrados = [];
         const egresosFiltrados = [];
-        
+
         meses.forEach((mes, index) => {
             if (ingresos[index] > 0 || egresos[index] > 0) {
                 mesesConDatos.push(mes);
@@ -110,7 +129,7 @@
                             beginAtZero: true,
                             ticks: {
                                 callback: function(value) {
-                                    return '$' + value.toLocaleString('es-CO'); // Formato colombiano
+                                    return '$' + value.toLocaleString('es-CO');
                                 }
                             }
                         },
@@ -132,43 +151,33 @@
                             callbacks: {
                                 label: function(context) {
                                     return `${context.dataset.label}: $${context.raw.toLocaleString('es-CO')}`;
-                                },
-                                title: function(context) {
-                                    return context[0].label;
                                 }
                             }
                         }
-                    },
-                    animation: {
-                        duration: 2000,
-                        easing: 'easeOutQuart'
                     }
                 }
             });
-        } else {
-            console.warn('No hay datos suficientes para mostrar el gráfico de ingresos/egresos');
         }
-        // 2. Gráfico de Estados de Miembros
+
+        // 2. Gráfico Estados de Miembros
         const ctxEstados = document.getElementById('graficoEstadosMiembros');
         const estadosData = {!! json_encode($estadosMiembros) !!};
-        const hasDataEstados = Object.keys(estadosData).length > 0;
-        
-        if (ctxEstados && hasDataEstados) {
-            // Configuración de colores para cada estado
+
+        if (ctxEstados && Object.keys(estadosData).length > 0) {
             const estadoColores = {
-                'activo': '#4CAF50',         // Verde
-                'inactivo': '#F44336',       // Rojo
-                'con excusa': '#FFC107',     // Amarillo
-                'borrado': '#607D8B',        // Gris
-                'ausente': '#FF9800',        // Naranja
-                'fallecido': '#9C27B0',      // Morado
-                'trasladado': '#2196F3',     // Azul
-                'no bautizado': '#00BCD4'    // Cyan
+                'activo': '#4CAF50',
+                'inactivo': '#F44336',
+                'con excusa': '#FFC107',
+                'borrado': '#607D8B',
+                'ausente': '#FF9800',
+                'fallecido': '#9C27B0',
+                'trasladado': '#2196F3',
+                'no bautizado': '#00BCD4'
             };
 
-            const labels = Object.keys(estadosData).map(estado => {
-                return estado.charAt(0).toUpperCase() + estado.slice(1);
-            });
+            const labels = Object.keys(estadosData).map(estado => 
+                estado.charAt(0).toUpperCase() + estado.slice(1)
+            );
 
             const data = Object.values(estadosData);
             const backgroundColors = Object.keys(estadosData).map(estado => 

@@ -26,7 +26,7 @@ class UsuarioController extends Controller
             'numero_identificacion' => 'required|string|max:20|unique:usuarios,numero_identificacion',
             'email' => 'required|email|max:255|unique:usuarios,email',
             'password' => 'required|string|min:6|confirmed',
-            'rol' => 'required|in:Pastor,Anciano,Fiscal,Tesorero,Secretario',
+            'rol' => 'required|in:pastor,anciano,fiscal,tesorero,secretario',
             'estado' => 'nullable|in:activo,inactivo',
         ]);
 

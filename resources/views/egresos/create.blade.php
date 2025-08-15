@@ -42,26 +42,36 @@
                     <label for="concepto" class="block text-sm font-medium text-gray-700">Concepto</label>
                     <input type="text" name="concepto" id="concepto" class="form-control" placeholder="Ej: Luz, agua, mantenimiento" required>
                 </div>
-
-                <!-- Valor -->
-                <div>
-                    <label for="valor" class="block text-sm font-medium text-gray-700">Valor</label>
-                    <input type="number" name="valor" id="valor" class="form-control" placeholder="Ej: 30000" required>
-                </div>
-
-                <!-- Casilla -->
-                <div>
-                    <label for="origen" class="block text-sm font-medium text-gray-700">Casilla</label>
-                    <select name="presupuesto_id" id="presupuesto_id" class="form-control" required>
-                        <option value="">Seleccione una casilla</option>
-                        @foreach ($casillas as $casilla)
-                            <option value="{{ $casilla->id }}">{{ $casilla->nombre_casilla }}</option>
-                        @endforeach
-                    </select>
-                </div>
             </div>
 
-            <!-- Tipo oculto -->
+            <!-- Casillas -->
+            <div class="mt-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Casillas y valores</label>
+                
+                <div id="casillasContainer">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                        <select name="presupuesto_id[]" class="form-control" required>
+                            <option value="">Seleccione una casilla</option>
+                            @foreach ($casillas as $casilla)
+                                <option value="{{ $casilla->id }}">{{ $casilla->nombre_casilla }}</option>
+                            @endforeach
+                        </select>
+                        <input type="number" name="valor[]" class="form-control" placeholder="Valor" required>
+                    </div>
+                </div>
+
+                <button type="button" onclick="agregarCasilla()" 
+                    class="mt-2 bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded">
+                    ➕ Agregar otra casilla
+                </button>
+            </div>
+
+            <!-- Total -->
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700">Total</label>
+                <input type="text" id="total" class="form-control bg-gray-100 font-bold" readonly>
+            </div>
+
             <input type="hidden" name="tipo" value="egreso">
 
             <!-- Botón Guardar -->
@@ -76,17 +86,15 @@
     </div>
 </div>
 
-<!-- Modal personalizado -->
+<!-- Modal -->
 <div id="modalGuardar" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
     <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md text-center">
         <h2 class="text-lg font-bold text-gray-800 mb-4">¿Deseas guardar este egreso?</h2>
         <div class="flex justify-center gap-4">
-            <button onclick="cerrarModal()"
-                    class="px-4 py-2 rounded bg-gray-500 hover:bg-gray-600 text-white">
+            <button onclick="cerrarModal()" class="px-4 py-2 rounded bg-gray-500 hover:bg-gray-600 text-white">
                 Cancelar
             </button>
-            <button onclick="document.getElementById('formEgreso').submit();"
-                    class="px-4 py-2 rounded bg-[#dc3545] hover:bg-[#a71d2a] text-white">
+            <button onclick="document.getElementById('formEgreso').submit();" class="px-4 py-2 rounded bg-[#dc3545] hover:bg-[#a71d2a] text-white">
                 Sí, Guardar
             </button>
         </div>
@@ -104,5 +112,38 @@
         document.getElementById('modalGuardar').classList.add('hidden');
         document.getElementById('modalGuardar').classList.remove('flex');
     }
+
+    function calcularTotal() {
+        let total = 0;
+        document.querySelectorAll('input[name="valor[]"]').forEach(input => {
+            let val = parseFloat(input.value) || 0;
+            total += val;
+        });
+        document.getElementById('total').value = total.toFixed(2);
+    }
+
+    document.addEventListener('input', function(e) {
+        if (e.target && e.target.name === 'valor[]') {
+            calcularTotal();
+        }
+    });
+
+    function agregarCasilla() {
+        const container = document.getElementById('casillasContainer');
+        const nuevo = document.createElement('div');
+        nuevo.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-4', 'mb-2');
+        nuevo.innerHTML = `
+            <select name="presupuesto_id[]" class="form-control" required>
+                <option value="">Seleccione una casilla</option>
+                @foreach ($casillas as $casilla)
+                    <option value="{{ $casilla->id }}">{{ $casilla->nombre_casilla }}</option>
+                @endforeach
+            </select>
+            <input type="number" name="valor[]" class="form-control" placeholder="Valor" required>
+        `;
+        container.appendChild(nuevo);
+    }
+
+    window.onload = calcularTotal;
 </script>
 @endsection

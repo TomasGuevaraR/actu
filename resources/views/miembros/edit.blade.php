@@ -3,7 +3,11 @@
 
 @section('content')
 <div class="max-w-3xl mx-auto mt-10 bg-white p-6 rounded shadow-md">
-    <h2 class="text-2xl font-bold text-[#0166b3] mb-6">Editar Miembro</h2>
+    <a href="{{ route('miembros.index') }}" 
+        class="inline-flex items-center px-4 py-2 bg-[#0166b3] text-white text-sm font-medium rounded hover:bg-[#014c86] transition">
+        <i class="fas fa-arrow-left mr-2"></i> Volver
+    </a>
+    <h2 class="text-2xl font-bold text-[#0166b3] text-center mb-6">Editar Miembro</h2>
 
     <form id="formulario-edicion" action="{{ route('miembros.update', $miembro->id) }}" method="POST">
         @csrf
@@ -67,6 +71,7 @@
                     <option value="fallecido" {{ $miembro->estado == 'fallecido' ? 'selected' : '' }}>Fallecido</option>
                     <option value="trasladado" {{ $miembro->estado == 'trasladado' ? 'selected' : '' }}>Trasladado</option>
                     <option value="no bautizado" {{ $miembro->estado == 'no bautizado' ? 'selected' : '' }}>No Bautizado</option>
+                    <option value="disciplina" {{ $miembro->estado == 'disciplina' ? 'selected' : '' }}>Disciplina</option>
 
                 </select>
             </div>
