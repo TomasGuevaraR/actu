@@ -5,66 +5,96 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Movimiento;
 use App\Models\Presupuesto;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class EgresoController extends Controller
 {
+    /**
+     * Mostrar formulario para crear egreso.
+     */
     public function create()
     {
         $casillas = Presupuesto::orderBy('nombre_casilla')->get();
         return view('egresos.create', compact('casillas'));
     }
 
+    /**
+     * Guardar egreso (varias casillas -> varios movimientos relacionados por presupuesto_id).
+     */
     public function store(Request $request)
     {
         $request->validate([
-            'fecha' => 'required|date',
-            'consecutivo' => 'required|string',
-            'detalle' => 'required|string',
-            'concepto' => 'required|string',
-            'tipo' => 'required|in:egreso',
-            'presupuesto_id' => 'required|array|min:1',
-            'presupuesto_id.*' => 'required|exists:presupuestos,id',
-            'valor' => 'required|array|min:1',
-            'valor.*' => 'required|numeric|min:0',
+            'fecha'           => 'required|date',
+            'consecutivo'     => 'nullable|string', // Opcional
+            'detalle'         => 'required|string|max:255',
+            'concepto'        => 'required|string|max:255',
+            'tipo'            => 'required|in:egreso',
+            'presupuesto_id'  => 'required|array|min:1',
+            'presupuesto_id.*'=> 'required|exists:presupuestos,id',
+            'valor'           => 'required|array|min:1',
+            'valor.*'         => 'required|numeric|min:0',
         ]);
 
-        // Verificar que el consecutivo no exista en esta transacción
-        if (Movimiento::where('consecutivo', $request->consecutivo)->exists()) {
-            return back()->withErrors(['consecutivo' => 'El consecutivo ya está en uso.'])->withInput();
+        // Si el usuario ingresó un consecutivo, verificar que no se repita
+        if ($request->filled('consecutivo')) {
+            if (Movimiento::where('consecutivo', $request->consecutivo)->exists()) {
+                return back()
+                    ->withErrors(['consecutivo' => 'El consecutivo ya está en uso.'])
+                    ->withInput();
+            }
+            $consecutivoGrupo = $request->consecutivo;
+        } else {
+            // Si no envían consecutivo, simplemente lo dejamos NULL
+            $consecutivoGrupo = null;
         }
 
-        // Obtener saldo inicial del último movimiento
-        $ultimoMovimiento = Movimiento::orderBy('id', 'desc')->first();
-        $saldoActual = $ultimoMovimiento ? $ultimoMovimiento->saldo : 0;
+        // Obtener último saldo general
+        $ultimoMovimiento = Movimiento::latest('id')->first();
+        $saldoActual = $ultimoMovimiento ? ($ultimoMovimiento->saldo ?? 0) : 0;
 
-        // Guardar cada egreso individual
-        foreach ($request->presupuesto_id as $index => $idPresupuesto) {
-            $presupuesto = Presupuesto::find($idPresupuesto);
-            $nombreCasilla = $presupuesto ? $presupuesto->nombre_casilla : '';
+        // Guardar en transacción para consistencia
+        DB::beginTransaction();
+        try {
+            foreach ($request->presupuesto_id as $index => $idPresupuesto) {
+                $presupuesto = Presupuesto::find($idPresupuesto);
 
-            // Descontar del saldo del libro
-            $saldoActual -= $request->valor[$index];
+                if (!$presupuesto) {
+                    throw new \Exception("Presupuesto con id {$idPresupuesto} no existe.");
+                }
 
-            // Crear movimiento
-            Movimiento::create([
-                'fecha' => $request->fecha,
-                'consecutivo' => $request->consecutivo, // mismo para todos
-                'detalle' => $request->detalle,
-                'concepto' => $request->concepto,
-                'valor' => $request->valor[$index],
-                'tipo' => 'egreso',
-                'saldo' => $saldoActual,
-                'presupuesto_id' => $idPresupuesto,
-                'casilla' => $nombreCasilla,
-            ]);
+                $valor = (float) ($request->valor[$index] ?? 0);
 
-            // Actualizar presupuesto
-            if ($presupuesto) {
-                if (isset($presupuesto->monto)) {
-                    $presupuesto->monto -= $request->valor[$index];
-                    $presupuesto->save();
+                // Restar valor del saldo global
+                $saldoActual -= $valor;
+
+                // Crear movimiento
+                Movimiento::create([
+                    'fecha'          => $request->fecha,
+                    'consecutivo'    => $consecutivoGrupo, // Puede ser NULL
+                    'detalle'        => $request->detalle,
+                    'concepto'       => $request->concepto,
+                    'valor'          => $valor,
+                    'tipo'           => 'egreso',
+                    'saldo'          => $saldoActual,
+                    'presupuesto_id' => $idPresupuesto,     // Aquí se relacionan
+                    'casilla'        => $presupuesto->nombre_casilla ?? null,
+                ]);
+
+                // Actualizar monto del presupuesto si existe esa columna
+                if (Schema::hasColumn('presupuestos', 'monto')) {
+                    $presupuesto->decrement('monto', $valor);
+                } elseif (Schema::hasColumn('presupuestos', 'valor_presupuesto')) {
+                    $presupuesto->decrement('valor_presupuesto', $valor);
                 }
             }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()
+                ->withErrors(['error' => 'Error guardando egreso: ' . $e->getMessage()])
+                ->withInput();
         }
 
         return redirect()->route('libro.index')

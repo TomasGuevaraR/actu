@@ -2,7 +2,7 @@
 
 @section('content')
 @php
-    $rolUsuario = Auth::user()->rol ?? ''; // Cambia 'rol' si tu campo se llama diferente
+    $rolUsuario = Auth::user()->rol ?? ''; 
 @endphp
 
 @if ($rolUsuario === 'secretario')
@@ -51,11 +51,12 @@
                         <th class="py-2 px-4 border">Consecutivo</th>
                         <th class="py-2 px-4 border">Detalle</th>
                         <th class="py-2 px-4 border">Concepto</th>
-                        <th class="py-2 px-4 border">Casilla</th>
+                        <th class="py-2 px-4 border">Casillas</th>
                         <th class="py-2 px-4 border">Valor</th>
                         <th class="py-2 px-4 border">Entrada</th>
                         <th class="py-2 px-4 border">Salida</th>
                         <th class="py-2 px-4 border">Saldo</th>
+                        <th class="py-2 px-4 border">Ver</th>
                         @if ($rolUsuario === 'tesorero')
                             <th class="py-2 px-4 border">Acciones</th>
                         @endif
@@ -70,11 +71,11 @@
 
                     @forelse ($movimientos as $mov)
                         @php
-                            if ($mov->tipo === 'ingreso') {
-                                $totalEntradas += $mov->valor;
-                            } elseif ($mov->tipo === 'egreso') {
-                                $totalSalidas += $mov->valor;
-                            }
+                            $entrada = (float) ($mov->total_ingreso ?? 0);
+                            $salida  = (float) ($mov->total_egreso ?? 0);
+                            $valorMostrar = $entrada > 0 ? $entrada : $salida;
+                            $totalEntradas += $entrada;
+                            $totalSalidas  += $salida;
                             $ultimoSaldo = $mov->saldo_actual ?? $ultimoSaldo;
                         @endphp
                         <tr class="hover:bg-gray-100">
@@ -82,34 +83,47 @@
                             <td class="py-2 px-4 border">{{ $mov->consecutivo ?? '-' }}</td>
                             <td class="py-2 px-4 border">{{ $mov->detalle }}</td>
                             <td class="py-2 px-4 border">{{ $mov->concepto }}</td>
-                            <td class="py-2 px-4 border">{{ $mov->casilla ?? '-' }}</td>
-                            <td class="py-2 px-4 border">{{ number_format($mov->valor, 0, ',', '.') }}</td>
+                            <td class="py-2 px-4 border">
+                                {{ $mov->casillas ? $mov->casillas : '-' }}
+                            </td>
+                            <td class="py-2 px-4 border">
+                                {{ number_format($valorMostrar, 0, ',', '.') }}
+                            </td>
                             <td class="py-2 px-4 border text-green-600 fw-semibold">
-                                {{ $mov->tipo === 'ingreso' ? number_format($mov->valor, 0, ',', '.') : '-' }}
+                                {{ $entrada > 0 ? number_format($entrada, 0, ',', '.') : '-' }}
                             </td>
                             <td class="py-2 px-4 border text-red-600 fw-semibold">
-                                {{ $mov->tipo === 'egreso' ? number_format($mov->valor, 0, ',', '.') : '-' }}
+                                {{ $salida > 0 ? number_format($salida, 0, ',', '.') : '-' }}
                             </td>
                             <td class="py-2 px-4 border fw-semibold">
                                 {{ number_format($mov->saldo_actual ?? 0, 0, ',', '.') }}
                             </td>
-                            
+
+                            <!-- Botón para ver en modal -->
+                            <td class="py-2 px-4 border text-center">
+                                <button 
+                                    class="text-indigo-600 hover:text-indigo-800" 
+                                    onclick="mostrarDetalles({{ $mov->id }})"
+                                    title="Ver detalles">
+                                    🔍
+                                </button>
+                            </td>
+
                             @if ($rolUsuario === 'tesorero')
                                 <td class="py-2 px-4 border text-center">
                                     <a href="{{ route('movimientos.edit', $mov->id) }}" class="text-blue-600 hover:text-blue-800 mx-1" title="Editar">
                                         ✏️
                                     </a>
-                                    <form action="{{ route('movimientos.destroy', $mov->id) }}" method="POST" class="inline-block" onsubmit="return confirm('¿Eliminar este movimiento?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-800 mx-1" title="Eliminar">🗑️</button>
-                                    </form>
+                                    <button type="button" 
+                                            class="text-red-600 hover:text-red-800 mx-1" 
+                                            title="Eliminar"
+                                            onclick="abrirModalEliminar('{{ route('movimientos.destroy', $mov->id) }}')">🗑️</button>
                                 </td>
                             @endif
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ $rolUsuario === 'tesorero' ? 10 : 9 }}" class="text-center py-4 text-gray-500">No hay movimientos registrados.</td>
+                            <td colspan="{{ $rolUsuario === 'tesorero' ? 11 : 10 }}" class="text-center py-4 text-gray-500">No hay movimientos registrados.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -121,9 +135,7 @@
                         <td class="py-2 px-4 text-green-700">{{ number_format($totalEntradas, 0, ',', '.') }}</td>
                         <td class="py-2 px-4 text-red-700">{{ number_format($totalSalidas, 0, ',', '.') }}</td>
                         <td class="py-2 px-4 text-black">{{ number_format($saldoFinal, 0, ',', '.') }}</td>
-                        @if ($rolUsuario === 'tesorero')
-                            <td class="py-2 px-4">—</td>
-                        @endif
+                        <td colspan="{{ $rolUsuario === 'tesorero' ? 2 : 1 }}"></td>
                     </tr>
                 </tfoot>
 
@@ -132,23 +144,127 @@
     </div>
 </div>
 @endif
-@endsection
 
-@if (session('success'))
-    <div 
-        class="fixed top-5 right-5 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate__animated animate__fadeInDown z-50" 
-        id="toast"
-    >
-        {{ session('success') }}
+<!-- Modal Ingreso -->
+<div id="modalIngreso" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-[700px] max-h-[90vh] overflow-y-auto text-sm">
+        <h2 class="text-lg font-bold text-green-600 mb-4">💰 Detalles de Ingreso</h2>
+        <div id="listaIngreso" class="grid grid-cols-3 gap-3"></div>
+        <div id="totalIngreso" class="mt-4 text-right font-bold text-green-600"></div>
+        <div class="mt-4 flex justify-end">
+            <button onclick="cerrarModal('modalIngreso')" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Cerrar</button>
+        </div>
     </div>
+</div>
 
-    <script>
-        setTimeout(() => {
-            const toast = document.getElementById('toast');
-            if (toast) {
-                toast.classList.add('animate__fadeOutUp');
-                setTimeout(() => toast.remove(), 1000);
-            }
-        }, 3000);
-    </script>
+<!-- Modal Egreso -->
+<div id="modalEgreso" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-[700px] max-h-[90vh] overflow-y-auto text-sm">
+        <h2 class="text-lg font-bold text-red-600 mb-4">📤 Detalles de Egreso</h2>
+        <div id="listaEgreso" class="grid grid-cols-3 gap-3"></div>
+        <div id="totalEgreso" class="mt-4 text-right font-bold text-red-600"></div>
+        <div class="mt-4 flex justify-end">
+            <button onclick="cerrarModal('modalEgreso')" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Eliminar -->
+<div id="modalEliminar" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-96 text-center">
+        <h2 class="text-xl font-bold text-red-600 mb-4">⚠️ Confirmar eliminación</h2>
+        <p class="mb-6">¿Seguro que deseas eliminar este registro?</p>
+        <form id="formEliminar" method="POST" action="">
+            @csrf
+            @method('DELETE')
+            <div class="flex justify-center gap-4">
+                <button type="button" onclick="cerrarModalEliminar()" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Cancelar</button>
+                <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Eliminar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Éxito -->
+@if(session('success'))
+    <div 
+        x-data="{ show: true }" 
+        x-init="setTimeout(() => show = false, 2000)" 
+        x-show="show"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 scale-90"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-300"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-90"
+        class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50"
+    >
+        <div class="bg-white rounded-lg shadow-lg p-6 max-w-sm text-center border border-blue-400">
+            <div class="flex flex-col items-center">
+                <svg class="w-12 h-12 text-blue-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M5 13l4 4L19 7" />
+                </svg>
+                <h2 class="text-xl font-semibold text-blue-600 mb-2">¡Éxito!</h2>
+                <p class="text-gray-700">{{ session('success') }}</p>
+            </div>
+        </div>
+    </div>
 @endif
+
+<script>
+    async function mostrarDetalles(id) {
+        const response = await fetch(`/movimientos/${id}/detalles`);
+        const data = await response.json();
+
+        const tipo = data.tipo; 
+        const detalles = data.detalles;
+
+        if (tipo === 'ingreso') {
+            llenarModal(detalles, 'listaIngreso', 'totalIngreso');
+            document.getElementById('modalIngreso').classList.remove('hidden');
+        } else {
+            llenarModal(detalles, 'listaEgreso', 'totalEgreso');
+            document.getElementById('modalEgreso').classList.remove('hidden');
+        }
+    }
+
+    function llenarModal(detalles, listaId, totalId) {
+        const lista = document.getElementById(listaId);
+        const totalDiv = document.getElementById(totalId);
+        lista.innerHTML = "";
+        totalDiv.textContent = "";
+
+        let total = 0;
+
+        if (detalles.length > 0) {
+            detalles.forEach((item) => {
+                const div = document.createElement("div");
+                div.className = "p-2 border rounded bg-gray-50 text-xs";
+                const label = item.nombre ? item.nombre : (item.casilla ?? 'N/A');
+                div.textContent = `${label} → $${new Intl.NumberFormat("es-CO").format(item.valor)}`;
+                lista.appendChild(div);
+                total += item.valor;
+            });
+            totalDiv.textContent = `Total: $${new Intl.NumberFormat("es-CO").format(total)}`;
+        } else {
+            const div = document.createElement("div");
+            div.textContent = "No hay registros asociados.";
+            lista.appendChild(div);
+        }
+    }
+
+    function cerrarModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+    }
+
+    function abrirModalEliminar(url) {
+        document.getElementById('formEliminar').action = url;
+        document.getElementById('modalEliminar').classList.remove('hidden');
+    }
+    function cerrarModalEliminar() {
+        document.getElementById('modalEliminar').classList.add('hidden');
+    }
+</script>
+
+@endsection

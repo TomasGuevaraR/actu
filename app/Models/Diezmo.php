@@ -24,4 +24,16 @@ class Diezmo extends Model
     protected $casts = [
         'fecha' => 'date',
     ];
+
+    // App\Models\Diezmo.php
+public function movimiento()
+{
+    return $this->belongsTo(Movimiento::class, 'movimiento_id');
+}
+
+public function miembro()
+{
+    return $this->belongsTo(Miembro::class, 'miembro_id'); 
+}
+
 }

@@ -17,6 +17,7 @@ use App\Http\Controllers\LibroController;
 use App\Http\Controllers\EstadoController;
 use App\Http\Controllers\ReporteController;
 
+
 // -------------------------------
 // RUTAS DE AUTENTICACIÓN PÚBLICAS
 // -------------------------------
@@ -46,11 +47,15 @@ Route::middleware(['auth', PreventBackHistory::class])->group(function () {
     // 📚 Libro Contable
     Route::get('/libro-contable', fn () => view('libro.index'))->name('libro-contable.index');
     Route::get('/libro', [LibroController::class, 'index'])->name('libro.index');
+    Route::get('/movimientos/{id}/detalles', [MovimientoController::class, 'detalles']);
+
 
     // 💰 Presupuesto y Movimientos
     Route::get('/presupuesto', fn () => view('presupuestos.index'))->name('presupuesto.index');
     Route::resource('presupuestos', PresupuestoController::class);
     Route::resource('movimientos', MovimientoController::class);
+    Route::get('/movimientos/{id}/detalles-ingreso', [MovimientoController::class, 'detallesIngreso']);
+    Route::resource('ingresos', MovimientoController::class);
 
     // 📊 Estados Financieros
     Route::get('/estados', [EstadoController::class, 'index'])->name('estado.index');

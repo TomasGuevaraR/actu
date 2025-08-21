@@ -5,46 +5,68 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Movimiento;
 use App\Models\Estado;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class LibroController extends Controller
 {
     /**
-     * Muestra todos los movimientos del libro contable con saldo actualizado.
+     * Muestra los movimientos agrupados (por consecutivo) con saldo actualizado.
      */
     public function index()
     {
-        // 1. Obtener el último saldo final del estado financiero
-        $estado = Estado::orderBy('anio', 'desc')->orderBy('mes', 'desc')->first();
-        $saldo = $estado ? $estado->saldo_final : 0;
+        // 1) Saldo base desde estados financieros
+        $estado = Estado::orderBy('anio', 'desc')
+            ->orderBy('mes', 'desc')
+            ->first();
+        $saldoInicial = $estado ? $estado->saldo_final : 0;
 
-        // 2. Obtener los movimientos ordenados por fecha ascendente (para procesar saldo correctamente)
-        $movimientos = Movimiento::orderBy('fecha', 'asc')->get();
+        // 2) Traer movimientos agregados por consecutivo
+        //    - MIN(id) como id de referencia para las rutas (edit/destroy)
+        //    - GROUP_CONCAT de casillas para mostrarlas juntas
+        //    - SUM de ingresos/egresos para el total por operación
+        $movimientosAgrupados = Movimiento::select(
+                DB::raw('MIN(id) as id'),
+                'consecutivo',
+                'fecha',
+                'detalle',
+                'concepto',
+                DB::raw("GROUP_CONCAT(casilla ORDER BY casilla SEPARATOR ', ') as casillas"),
+                DB::raw("SUM(CASE WHEN tipo = 'ingreso' THEN valor ELSE 0 END) as total_ingreso"),
+                DB::raw("SUM(CASE WHEN tipo = 'egreso' THEN valor ELSE 0 END) as total_egreso")
+            )
+            ->groupBy('consecutivo', 'fecha', 'detalle', 'concepto')
+            ->orderBy('fecha', 'asc')
+            ->get();
 
+        // 3) Calcular saldo acumulado y totales
+        $saldoFinal = $saldoInicial;
         $totalEntradas = 0;
         $totalSalidas = 0;
-        $saldoFinal = $saldo; // Copia del saldo original
 
-        // 3. Recalcular el saldo para cada movimiento
-        foreach ($movimientos as $mov) {
-            if ($mov->tipo === 'ingreso') {
-                $saldoFinal += $mov->valor;
-                $totalEntradas += $mov->valor;
-            } elseif ($mov->tipo === 'egreso') {
-                $saldoFinal -= $mov->valor;
-                $totalSalidas += $mov->valor;
+        foreach ($movimientosAgrupados as $mov) {
+            if ($mov->total_ingreso > 0) {
+                $saldoFinal += $mov->total_ingreso;
+                $totalEntradas += $mov->total_ingreso;
+            }
+            if ($mov->total_egreso > 0) {
+                $saldoFinal -= $mov->total_egreso;
+                $totalSalidas += $mov->total_egreso;
             }
 
-            // Guardar el saldo actual para cada fila
+            // Campo calculado para la vista (no existe en BD)
             $mov->saldo_actual = $saldoFinal;
         }
 
-        // 4. Revertir el orden para mostrar del más reciente al más antiguo
-        $movimientos = $movimientos->sortBy('fecha');
+        // 4) Mostrar más recientes primero
+        $movimientos = $movimientosAgrupados->sortByDesc('fecha');
 
-
-        // 5. Enviar también los totales para mostrar en el pie
-        return view('libro.index', compact('movimientos', 'totalEntradas', 'totalSalidas', 'saldoFinal'));
+        // 5) Enviar a la vista
+        return view('libro.index', compact(
+            'movimientos',
+            'totalEntradas',
+            'totalSalidas',
+            'saldoFinal'
+        ));
     }
 
     public function crearIngreso()
