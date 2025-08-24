@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 21-08-2025 a las 06:00:35
+-- Tiempo de generación: 25-08-2025 a las 01:31:33
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -158,6 +158,18 @@ INSERT INTO `diezmos` (`id`, `nombre`, `valor`, `fecha`, `created_at`, `updated_
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `egresos`
+--
+
+CREATE TABLE `egresos` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `estados`
 --
 
@@ -230,6 +242,52 @@ CREATE TABLE `job_batches` (
   `created_at` int(11) NOT NULL,
   `finished_at` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `libro_contables`
+--
+
+CREATE TABLE `libro_contables` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `nombre` varchar(255) NOT NULL,
+  `mes_libro` tinyint(3) UNSIGNED NOT NULL,
+  `anio_libro` smallint(5) UNSIGNED NOT NULL,
+  `monto` decimal(10,2) DEFAULT NULL,
+  `estado_id` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `libro_contables`
+--
+
+INSERT INTO `libro_contables` (`id`, `nombre`, `mes_libro`, `anio_libro`, `monto`, `estado_id`, `created_at`, `updated_at`) VALUES
+(2, 'Enero 2025', 1, 2025, 0.00, 1, '2025-08-24 23:24:50', '2025-08-24 23:24:50');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `libro_contable_estados`
+--
+
+CREATE TABLE `libro_contable_estados` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `nombre` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `libro_contable_estados`
+--
+
+INSERT INTO `libro_contable_estados` (`id`, `nombre`, `created_at`, `updated_at`) VALUES
+(1, 'Abierto', '2025-08-24 23:24:26', '2025-08-24 23:24:26'),
+(2, 'Cerrado', '2025-08-24 23:24:26', '2025-08-24 23:24:26'),
+(3, 'Aprobado', '2025-08-24 23:24:26', '2025-08-24 23:24:26');
 
 -- --------------------------------------------------------
 
@@ -333,7 +391,11 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (17, '2025_07_13_205936_create_diezmos_table', 11),
 (18, '2025_07_13_214912_create_diezmos_table', 12),
 (19, '2025_07_15_215046_add_movimiento_id_to_diezmos_table', 13),
-(20, '2025_07_25_115357_create_password_reset_tokens_table', 14);
+(20, '2025_07_25_115357_create_password_reset_tokens_table', 14),
+(21, '2025_07_29_025907_create_reportes_table', 15),
+(22, '2025_08_16_043538_create_egresos_table', 15),
+(23, '2025_08_23_162933_create_libro_contable_estados_table', 15),
+(24, '2025_08_23_163026_create_libro_contables_table', 15);
 
 -- --------------------------------------------------------
 
@@ -353,23 +415,25 @@ CREATE TABLE `movimientos` (
   `concepto` varchar(255) DEFAULT NULL,
   `casilla` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `libro_contable_id` bigint(20) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Volcado de datos para la tabla `movimientos`
 --
 
-INSERT INTO `movimientos` (`id`, `presupuesto_id`, `fecha`, `consecutivo`, `tipo`, `valor`, `saldo`, `detalle`, `concepto`, `casilla`, `created_at`, `updated_at`) VALUES
-(18, NULL, '2025-01-05', NULL, 'ingreso', 1761500.00, 1761500.00, 'Templo Unido', 'Diezmos 05  enero 2025', NULL, '2025-08-14 07:57:32', '2025-08-14 07:57:32'),
-(20, NULL, '2025-01-12', '46', 'ingreso', 1455600.00, 3217100.00, 'Templo Unido', 'Diezmos 12 enero 2025', NULL, '2025-08-14 16:54:16', '2025-08-21 08:58:30'),
-(21, NULL, '2025-01-19', NULL, 'ingreso', 3051300.00, 6268400.00, 'Templo Unido', 'Diezmos 19 enero 2025', NULL, '2025-08-14 17:11:20', '2025-08-14 17:11:20'),
-(23, NULL, '2025-01-26', '45', 'ingreso', 1308300.00, 8885000.00, 'Templo Unido', 'Diezmos 26 enero 2025', NULL, '2025-08-14 21:59:27', '2025-08-21 08:57:45'),
-(34, 22, '2025-01-10', 'TMP-20250816035046-NJD4', 'egreso', 1000.00, 8744000.00, 'Daniel Viloria', 'Bonificación Pastor 2', 'Desarrollo', '2025-08-16 08:50:46', '2025-08-16 08:50:46'),
-(35, 5, '2025-01-10', 'TMP-20250816035046-NJD4', 'egreso', 200.00, 8743800.00, 'Daniel Viloria', 'Bonificación Pastor 2', 'Prestación Social', '2025-08-16 08:50:46', '2025-08-16 08:50:46'),
-(36, 11, '2025-06-10', '13', 'egreso', 9000.00, 8742800.00, 'Daniel Viloria', 'Sueldo del Pastor', 'Gastos de Representación', '2025-08-16 09:01:21', '2025-08-19 22:49:56'),
-(41, 13, '2025-08-14', '23', 'egreso', 2000000.00, 6722600.00, 'Templo Unido', 'ministerio', 'Estudios Teológicos', '2025-08-16 09:20:23', '2025-08-21 08:58:05'),
-(42, 18, '2025-08-14', '23', 'egreso', 1000000.00, 4722600.00, 'Templo Unido', 'ministerio', 'Ministerio Infantil', '2025-08-16 09:20:24', '2025-08-16 10:31:28');
+INSERT INTO `movimientos` (`id`, `presupuesto_id`, `fecha`, `consecutivo`, `tipo`, `valor`, `saldo`, `detalle`, `concepto`, `casilla`, `created_at`, `updated_at`, `libro_contable_id`) VALUES
+(18, NULL, '2025-01-05', NULL, 'ingreso', 1761500.00, 1761500.00, 'Templo Unido', 'Diezmos 05  enero 2025', NULL, '2025-08-14 07:57:32', '2025-08-14 07:57:32', NULL),
+(20, NULL, '2025-01-12', '46', 'ingreso', 1455600.00, 3217100.00, 'Templo Unido', 'Diezmos 12 enero 2025', NULL, '2025-08-14 16:54:16', '2025-08-21 08:58:30', NULL),
+(21, NULL, '2025-01-19', NULL, 'ingreso', 3051300.00, 6268400.00, 'Templo Unido', 'Diezmos 19 enero 2025', NULL, '2025-08-14 17:11:20', '2025-08-14 17:11:20', NULL),
+(23, NULL, '2025-01-26', '45', 'ingreso', 1308300.00, 8885000.00, 'Templo Unido', 'Diezmos 26 enero 2025', NULL, '2025-08-14 21:59:27', '2025-08-21 08:57:45', NULL),
+(34, 22, '2025-01-10', 'TMP-20250816035046-NJD4', 'egreso', 1000.00, 8744000.00, 'Daniel Viloria', 'Bonificación Pastor 2', 'Desarrollo', '2025-08-16 08:50:46', '2025-08-16 08:50:46', NULL),
+(35, 5, '2025-01-10', 'TMP-20250816035046-NJD4', 'egreso', 200.00, 8743800.00, 'Daniel Viloria', 'Bonificación Pastor 2', 'Prestación Social', '2025-08-16 08:50:46', '2025-08-16 08:50:46', NULL),
+(36, 11, '2025-06-10', '13', 'egreso', 9000.00, 8742800.00, 'Daniel Viloria', 'Sueldo del Pastor', 'Gastos de Representación', '2025-08-16 09:01:21', '2025-08-19 22:49:56', NULL),
+(41, 13, '2025-08-14', '23', 'egreso', 2000000.00, 6722600.00, 'Templo Unido', 'ministerio', 'Estudios Teológicos', '2025-08-16 09:20:23', '2025-08-21 08:58:05', NULL),
+(42, 18, '2025-08-14', '23', 'egreso', 1000000.00, 4722600.00, 'Templo Unido', 'ministerio', 'Ministerio Infantil', '2025-08-16 09:20:24', '2025-08-16 10:31:28', NULL),
+(46, 15, '2025-01-15', NULL, 'egreso', 100.00, -100.00, 'Daniel Viloria', 'Bonificación Pastor', 'Discipulado', '2025-08-25 04:28:50', '2025-08-25 04:28:50', 2);
 
 -- --------------------------------------------------------
 
@@ -435,6 +499,22 @@ INSERT INTO `presupuestos` (`id`, `nombre_casilla`, `categoria`, `valor_mensual`
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `reportes`
+--
+
+CREATE TABLE `reportes` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `titulo` varchar(255) NOT NULL,
+  `descripcion` text DEFAULT NULL,
+  `fecha` date NOT NULL,
+  `autor` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `sessions`
 --
 
@@ -452,7 +532,7 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('hnEreIe7LMgNArPCIL0WzFkZ0WxuyudoeSv1ks24', 7, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiZ3JoQlFBWk4yQWtYaFdRQ1NGVllrMnNMNzNJZTNDTjBRMTdBY2UzeSI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NzY6Imh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9yZXBvcnRlL2RpZXptb3MvZXhjZWw/YW5pbz0mZmVjaGE9Jm1lcz0mbm9tYnJlPUd1ZXZhcmEiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX1zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aTo3O30=', 1755748786);
+('ouLFcp2VNDrqGLdwf8DIlRA5UGvekMjFkErj4Var', 7, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiQTB0UXhPaG11V0xaV2s3VW8wRXA4OTVEMnlwRll4TzNqODRPZlBvQyI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDU6Imh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9tb3ZpbWllbnRvcy80Ni9kZXRhbGxlcyI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjc7fQ==', 1756078141);
 
 -- --------------------------------------------------------
 
@@ -507,6 +587,12 @@ ALTER TABLE `diezmos`
   ADD KEY `diezmos_movimiento_id_foreign` (`movimiento_id`);
 
 --
+-- Indices de la tabla `egresos`
+--
+ALTER TABLE `egresos`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indices de la tabla `estados`
 --
 ALTER TABLE `estados`
@@ -531,6 +617,20 @@ ALTER TABLE `jobs`
 --
 ALTER TABLE `job_batches`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indices de la tabla `libro_contables`
+--
+ALTER TABLE `libro_contables`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `libro_contables_estado_id_foreign` (`estado_id`);
+
+--
+-- Indices de la tabla `libro_contable_estados`
+--
+ALTER TABLE `libro_contable_estados`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `libro_contable_estados_nombre_unique` (`nombre`);
 
 --
 -- Indices de la tabla `miembros`
@@ -564,6 +664,12 @@ ALTER TABLE `presupuestos`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indices de la tabla `reportes`
+--
+ALTER TABLE `reportes`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indices de la tabla `sessions`
 --
 ALTER TABLE `sessions`
@@ -590,6 +696,12 @@ ALTER TABLE `diezmos`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=141;
 
 --
+-- AUTO_INCREMENT de la tabla `egresos`
+--
+ALTER TABLE `egresos`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `estados`
 --
 ALTER TABLE `estados`
@@ -608,6 +720,18 @@ ALTER TABLE `jobs`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de la tabla `libro_contables`
+--
+ALTER TABLE `libro_contables`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT de la tabla `libro_contable_estados`
+--
+ALTER TABLE `libro_contable_estados`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
 -- AUTO_INCREMENT de la tabla `miembros`
 --
 ALTER TABLE `miembros`
@@ -617,19 +741,25 @@ ALTER TABLE `miembros`
 -- AUTO_INCREMENT de la tabla `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT de la tabla `movimientos`
 --
 ALTER TABLE `movimientos`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
 -- AUTO_INCREMENT de la tabla `presupuestos`
 --
 ALTER TABLE `presupuestos`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+
+--
+-- AUTO_INCREMENT de la tabla `reportes`
+--
+ALTER TABLE `reportes`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
@@ -646,6 +776,12 @@ ALTER TABLE `usuarios`
 --
 ALTER TABLE `diezmos`
   ADD CONSTRAINT `diezmos_movimiento_id_foreign` FOREIGN KEY (`movimiento_id`) REFERENCES `movimientos` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `libro_contables`
+--
+ALTER TABLE `libro_contables`
+  ADD CONSTRAINT `libro_contables_estado_id_foreign` FOREIGN KEY (`estado_id`) REFERENCES `libro_contable_estados` (`id`) ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `movimientos`

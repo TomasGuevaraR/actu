@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Movimiento;
 use App\Models\Presupuesto;
+use App\Models\LibroContable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Carbon\Carbon;
 
 class EgresoController extends Controller
 {
@@ -26,7 +28,7 @@ class EgresoController extends Controller
     {
         $request->validate([
             'fecha'           => 'required|date',
-            'consecutivo'     => 'nullable|string', // Opcional
+            'consecutivo'     => 'nullable|string',
             'detalle'         => 'required|string|max:255',
             'concepto'        => 'required|string|max:255',
             'tipo'            => 'required|in:egreso',
@@ -36,7 +38,31 @@ class EgresoController extends Controller
             'valor.*'         => 'required|numeric|min:0',
         ]);
 
-        // Si el usuario ingresó un consecutivo, verificar que no se repita
+        // ============================
+        // 1) Buscar libro contable abierto
+        // ============================
+        $libroActual = LibroContable::whereHas('estado', function($q) {
+            $q->where('nombre', 'Abierto');
+        })->first();
+
+        if (!$libroActual) {
+            return back()->withErrors(['error' => 'No hay ningún libro contable abierto.'])->withInput();
+        }
+
+        // ============================
+        // 2) Validar que la fecha pertenezca al mes y año del libro abierto
+        // ============================
+        $fechaIngresada = Carbon::parse($request->fecha);
+
+        if ($fechaIngresada->month != $libroActual->mes_libro || $fechaIngresada->year != $libroActual->anio_libro) {
+            return back()->withErrors([
+                'La fecha debe pertenecer al mes y año del libro contable activo (' . $libroActual->nombre . ').'
+            ])->withInput();
+        }
+
+        // ============================
+        // 3) Validar consecutivo único
+        // ============================
         if ($request->filled('consecutivo')) {
             if (Movimiento::where('consecutivo', $request->consecutivo)->exists()) {
                 return back()
@@ -45,40 +71,42 @@ class EgresoController extends Controller
             }
             $consecutivoGrupo = $request->consecutivo;
         } else {
-            // Si no envían consecutivo, simplemente lo dejamos NULL
             $consecutivoGrupo = null;
         }
 
-        // Obtener último saldo general
-        $ultimoMovimiento = Movimiento::latest('id')->first();
-        $saldoActual = $ultimoMovimiento ? ($ultimoMovimiento->saldo ?? 0) : 0;
+        // ============================
+        // 4) Obtener último saldo del libro actual
+        // ============================
+        $ultimoMovimientoLibro = Movimiento::where('libro_contable_id', $libroActual->id)->latest('id')->first();
+        $saldoActual = $ultimoMovimientoLibro ? ($ultimoMovimientoLibro->saldo ?? 0) : 0;
 
-        // Guardar en transacción para consistencia
+        // ============================
+        // 5) Guardar movimientos en transacción
+        // ============================
         DB::beginTransaction();
         try {
             foreach ($request->presupuesto_id as $index => $idPresupuesto) {
                 $presupuesto = Presupuesto::find($idPresupuesto);
-
                 if (!$presupuesto) {
                     throw new \Exception("Presupuesto con id {$idPresupuesto} no existe.");
                 }
 
                 $valor = (float) ($request->valor[$index] ?? 0);
 
-                // Restar valor del saldo global
+                // Restar valor del saldo del libro actual (egreso disminuye saldo)
                 $saldoActual -= $valor;
 
-                // Crear movimiento
                 Movimiento::create([
-                    'fecha'          => $request->fecha,
-                    'consecutivo'    => $consecutivoGrupo, // Puede ser NULL
-                    'detalle'        => $request->detalle,
-                    'concepto'       => $request->concepto,
-                    'valor'          => $valor,
-                    'tipo'           => 'egreso',
-                    'saldo'          => $saldoActual,
-                    'presupuesto_id' => $idPresupuesto,     // Aquí se relacionan
-                    'casilla'        => $presupuesto->nombre_casilla ?? null,
+                    'fecha'            => $request->fecha,
+                    'consecutivo'      => $consecutivoGrupo,
+                    'detalle'          => $request->detalle,
+                    'concepto'         => $request->concepto,
+                    'valor'            => $valor,
+                    'tipo'             => 'egreso',
+                    'saldo'            => $saldoActual,
+                    'presupuesto_id'   => $idPresupuesto,
+                    'casilla'          => $presupuesto->nombre_casilla ?? null,
+                    'libro_contable_id'=> $libroActual->id, // relación con libro activo
                 ]);
 
                 // Actualizar monto del presupuesto si existe esa columna

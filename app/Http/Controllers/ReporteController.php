@@ -123,7 +123,7 @@ class ReporteController extends Controller
 {
     $query = Diezmo::query()->select('nombre', 'valor', 'fecha');
 
-    // Aplicar filtros enviados desde el formulario
+    // Filtros
     if ($request->filled('nombre')) {
         $query->where('nombre', 'like', '%' . $request->nombre . '%');
     }
@@ -137,11 +137,9 @@ class ReporteController extends Controller
         $query->whereYear('fecha', $request->anio);
     }
 
-    // Ya no aplicar la última fecha automáticamente.
-    // Si no hay resultados, se exporta vacío (como debe ser con los filtros aplicados)
     $diezmos = $query->orderBy('nombre')->get();
 
-    $response = new StreamedResponse(function () use ($diezmos) {
+    return response()->stream(function () use ($diezmos) {
         $handle = fopen('php://output', 'w');
         fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM para Excel
 
@@ -157,14 +155,10 @@ class ReporteController extends Controller
         }
 
         fclose($handle);
-    });
-
-    $filename = 'reporte_diezmos_' . now()->format('Ymd_His') . '.csv';
-
-    $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
-    $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
-
-    return $response;
+    }, 200, [
+        "Content-Type" => "text/csv; charset=UTF-8",
+        "Content-Disposition" => "attachment; filename=reporte_diezmos_" . now()->format("Ymd_His") . ".csv"
+    ]);
 }
 
 

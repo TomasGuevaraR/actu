@@ -15,33 +15,73 @@
     <div class="max-w-4xl mx-auto bg-white shadow-md rounded-lg p-6">
         <h2 class="text-2xl font-bold text-[#0166b3] mb-6 text-center">Registrar Ingreso</h2>
 
+        {{-- Mostrar errores de validación --}}
+        @if ($errors->any())
+            <div class="mb-6 p-4 bg-red-100 text-red-700 rounded-lg">
+                <ul class="list-disc pl-5">
+                    @foreach ($errors->all() as $error)
+                        <li class="text-sm">{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <form id="formIngreso" action="{{ route('ingresos.store') }}" method="POST">
             @csrf
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label for="fecha" class="block text-sm font-medium text-gray-700">Fecha del Ingreso</label>
-                    <input type="date" name="fecha" id="fecha" class="form-control" required>
+                    <input type="date" name="fecha" id="fecha"
+                        value="{{ old('fecha') }}"
+                        class="form-control @error('fecha') border-red-500 @enderror" required>
+                    @error('fecha')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div>
                     <label for="consecutivo" class="block text-sm font-medium text-gray-700">Consecutivo</label>
-                    <input type="text" name="consecutivo" id="consecutivo" class="form-control" placeholder="Número de comprobante" required>
+                    <input type="text" name="consecutivo" id="consecutivo"
+                        value="{{ old('consecutivo') }}"
+                        class="form-control @error('consecutivo') border-red-500 @enderror"
+                        placeholder="Número de comprobante" required>
+                    @error('consecutivo')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div>
                     <label for="detalle" class="block text-sm font-medium text-gray-700">Recibido de...</label>
-                    <input type="text" name="detalle" id="detalle" class="form-control" placeholder="Ej: Donación, venta, etc." required>
+                    <input type="text" name="detalle" id="detalle"
+                        value="{{ old('detalle') }}"
+                        class="form-control @error('detalle') border-red-500 @enderror"
+                        placeholder="Ej: Donación, venta, etc." required>
+                    @error('detalle')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div>
                     <label for="concepto" class="block text-sm font-medium text-gray-700">Concepto</label>
-                    <input type="text" name="concepto" id="concepto" class="form-control" placeholder="Ej: Ingreso general, evento especial" required>
+                    <input type="text" name="concepto" id="concepto"
+                        value="{{ old('concepto') }}"
+                        class="form-control @error('concepto') border-red-500 @enderror"
+                        placeholder="Ej: Ingreso general, evento especial" required>
+                    @error('concepto')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div>
                     <label for="valor" class="block text-sm font-medium text-gray-700">Valor</label>
-                    <input type="number" name="valor" id="valor" class="form-control" placeholder="Ej: 50000" required>
+                    <input type="number" name="valor" id="valor"
+                        value="{{ old('valor') }}"
+                        class="form-control @error('valor') border-red-500 @enderror"
+                        placeholder="Ej: 50000" required>
+                    @error('valor')
+                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
 

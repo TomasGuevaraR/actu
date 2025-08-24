@@ -16,6 +16,8 @@ use App\Http\Controllers\DiezmoController;
 use App\Http\Controllers\LibroController;
 use App\Http\Controllers\EstadoController;
 use App\Http\Controllers\ReporteController;
+use App\Http\Middleware\CheckRol;
+use App\Http\Controllers\LibroContableController;
 
 
 // -------------------------------
@@ -48,6 +50,17 @@ Route::middleware(['auth', PreventBackHistory::class])->group(function () {
     Route::get('/libro-contable', fn () => view('libro.index'))->name('libro-contable.index');
     Route::get('/libro', [LibroController::class, 'index'])->name('libro.index');
     Route::get('/movimientos/{id}/detalles', [MovimientoController::class, 'detalles']);
+    Route::post('/libro-contable/{id}/cerrar',  [LibroContableController::class, 'cerrar'])->name('libro.cerrar');
+    Route::post('/libro-contable/{id}/aprobar', [LibroContableController::class, 'aprobar'])->name('libro.aprobar');
+
+    Route::middleware(['auth', 'checkRol:tesorero'])->group(function() {
+    Route::post('/libro-contable/{id}/cerrar', [LibroContableController::class, 'cerrar'])->name('libro.cerrar');
+});
+
+Route::middleware(['auth', 'checkRol:pastor,fiscal'])->group(function() {
+    Route::post('/libro-contable/{id}/aprobar', [LibroContableController::class, 'aprobar'])->name('libro.aprobar');
+    Route::post('/libro-contable/{id}/rechazar', [LibroContableController::class, 'rechazar'])->name('libro.rechazar');
+});
 
 
     // 💰 Presupuesto y Movimientos
