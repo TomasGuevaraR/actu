@@ -9,13 +9,13 @@ class LibroContableEstado extends Model
 {
     use HasFactory;
 
-    protected $table = 'libro_contable_estados';
-
     protected $fillable = ['nombre'];
 
-    // Relación inversa
+    /**
+     * Relación inversa con libros contables
+     */
     public function libros()
     {
-        return $this->hasMany(LibroContable::class, 'estado_id');
+        return $this->hasMany(LibroContable::class, 'estado_id', 'id');
     }
 }

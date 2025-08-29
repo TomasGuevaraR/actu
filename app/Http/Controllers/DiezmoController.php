@@ -6,20 +6,19 @@ use Illuminate\Http\Request;
 use App\Models\Diezmo;
 use App\Models\Movimiento;
 use App\Models\Miembro;
+use App\Models\LibroContable;
 use Carbon\Carbon;
 
 class DiezmoController extends Controller
 {
     public function index()
     {
-        // Este método carga la vista con la lista de miembros para poder mostrarlos en el formulario
         $miembros = Miembro::selectRaw("CONCAT(nombres, ' ', apellidos) as nombre_completo")->pluck('nombre_completo');
         return view('diezmo.index', compact('miembros'));
     }
 
     public function create()
     {
-        // Puedes usar este método si planeas mostrar un formulario separado para crear
         $miembros = Miembro::all();
         return view('diezmo.index', compact('miembros'));
     }
@@ -37,6 +36,13 @@ class DiezmoController extends Controller
             'ofrenda'   => 'nullable|numeric|min:0',
         ]);
 
+        // 🔹 Buscar el libro contable activo
+        $libro = LibroContable::where('estado', 'activo')->first();
+
+        if (!$libro) {
+            return redirect()->back()->with('error', 'No hay un libro contable activo. Activa un libro para poder registrar diezmos.');
+        }
+
         $fecha = $request->fecha;
         $detalle = $request->detalle;
         $concepto = $request->concepto;
@@ -44,22 +50,23 @@ class DiezmoController extends Controller
         $totalDiezmos = array_sum($request->valores);
         $totalGeneral = $totalDiezmos + $ofrenda;
 
-        // Obtener saldo anterior
-        $ultimoMovimiento = Movimiento::latest('id')->first();
+        // 🔹 Obtener saldo anterior dentro del mismo libro
+        $ultimoMovimiento = Movimiento::where('libro_contable_id', $libro->id)->latest('id')->first();
         $saldoAnterior = $ultimoMovimiento ? $ultimoMovimiento->saldo : 0;
         $nuevoSaldo = $saldoAnterior + $totalGeneral;
 
-        // Crear movimiento general
+        // 🔹 Crear movimiento general vinculado al libro contable
         $movimiento = Movimiento::create([
-            'fecha'    => $fecha,
-            'detalle'  => $detalle,
-            'concepto' => $concepto,
-            'valor'    => $totalGeneral,
-            'tipo'     => 'ingreso',
-            'saldo'    => $nuevoSaldo,
+            'fecha'             => $fecha,
+            'detalle'           => $detalle,
+            'concepto'          => $concepto,
+            'valor'             => $totalGeneral,
+            'tipo'              => 'ingreso',
+            'saldo'             => $nuevoSaldo,
+            'libro_contable_id' => $libro->id,  // 👈 se agrega
         ]);
 
-        // Registrar los diezmos individuales
+        // 🔹 Registrar los diezmos individuales
         foreach ($request->nombres as $i => $nombre) {
             Diezmo::create([
                 'fecha'         => $fecha,
@@ -69,7 +76,7 @@ class DiezmoController extends Controller
             ]);
         }
 
-        // Registrar la ofrenda si existe
+        // 🔹 Registrar la ofrenda si existe
         if ($ofrenda > 0) {
             Diezmo::create([
                 'fecha'         => $fecha,

@@ -5,9 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Movimiento;
 use App\Models\Presupuesto;
-use App\Models\Diezmo; // 👈 para ingresos
+use App\Models\Diezmo;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class MovimientoController extends Controller
 {
@@ -15,32 +14,30 @@ class MovimientoController extends Controller
      * Editar movimiento
      */
     public function edit($id)
-{
-    $movimiento = Movimiento::findOrFail($id);
+    {
+        $movimiento = Movimiento::findOrFail($id);
 
-    // ✅ Caso 1: Ingreso → solo cargamos este movimiento
-    if ($movimiento->tipo === 'ingreso') {
-        return view('ingresos.edit', [
-            'movimiento'  => $movimiento,
-            'movimientos' => collect([$movimiento]),
-        ]);
+        // ✅ Caso 1: Ingreso → solo cargamos este movimiento
+        if ($movimiento->tipo === 'ingreso') {
+            return view('ingresos.edit', [
+                'movimiento'  => $movimiento,
+                'movimientos' => collect([$movimiento]),
+            ]);
+        }
+
+        // ✅ Caso 2: Egreso → buscamos movimientos relacionados
+        $movimientos = Movimiento::with('presupuesto:id,nombre_casilla')
+            ->where('consecutivo', $movimiento->consecutivo)
+            ->where('concepto', $movimiento->concepto)
+            ->where('tipo', 'egreso')
+            ->orderBy('id')
+            ->get()
+            ->whenEmpty(fn () => collect([$movimiento]));
+
+        $casillas = Presupuesto::orderBy('nombre_casilla')->get();
+
+        return view('movimientos.edit', compact('movimiento', 'movimientos', 'casillas'));
     }
-
-    // ✅ Caso 2: Egreso → buscamos movimientos relacionados
-    $movimientos = Movimiento::with('presupuesto:id,nombre_casilla')
-        ->where('consecutivo', $movimiento->consecutivo)
-        ->where('concepto', $movimiento->concepto)
-        ->where('tipo', 'egreso')
-        ->orderBy('id')
-        ->get()
-        ->whenEmpty(fn () => collect([$movimiento])); // si no encuentra nada, usa el movimiento actual
-
-    // ✅ Casillas solo se cargan cuando son necesarias
-    $casillas = Presupuesto::orderBy('nombre_casilla')->get();
-
-    return view('movimientos.edit', compact('movimiento', 'movimientos', 'casillas'));
-}
-
 
     /**
      * Actualizar movimiento
@@ -49,47 +46,99 @@ class MovimientoController extends Controller
     {
         $movimiento = Movimiento::findOrFail($id);
 
-        $request->validate([
-            'fecha' => 'required|date',
-            'consecutivo' => 'nullable|string|max:50',
-            'detalle' => 'required|string|max:255',
-            'concepto' => 'required|string|max:255',
+        if ($movimiento->tipo === 'ingreso') {
+            // 🔹 Normalizar valor con función auxiliar
+            $valorNormalizado = $this->normalizarNumero($request->input('valor'));
 
-            // Reglas para egresos (líneas con casillas)
-            'movimiento_id' => 'required|array',
-            'movimiento_id.*' => 'exists:movimientos,id',
-            'presupuesto_id' => 'required|array',
-            'presupuesto_id.*' => 'nullable|exists:presupuestos,id',
-            'valor' => 'required|array',
-            'valor.*' => 'numeric|min:0',
-        ]);
+            $request->merge([
+                'valor' => $valorNormalizado
+            ]);
 
-        $submitted_ids = $request->input('movimiento_id', []);
-        $presupuestos = $request->input('presupuesto_id', []);
-        $valores = $request->input('valor', []);
+            $request->validate([
+                'fecha'       => 'required|date',
+                'consecutivo' => 'nullable|string|max:50',
+                'detalle'     => 'required|string|max:255',
+                'concepto'    => 'required|string|max:255',
+                'valor'       => 'required|numeric|min:0',
+            ]);
 
-        DB::transaction(function () use ($submitted_ids, $presupuestos, $valores, $request, $movimiento) {
-            foreach ($submitted_ids as $index => $mov_id) {
-                $data = [
-                    'fecha' => $request->fecha,
-                    'consecutivo' => $request->consecutivo ?? $movimiento->consecutivo,
-                    'detalle' => $request->detalle,
-                    'concepto' => $request->concepto,
-                    'presupuesto_id' => $presupuestos[$index] ?? null,
-                    'valor' => $valores[$index] ?? 0,
-                ];
-
-                $target = Movimiento::where('id', $mov_id)
-                    ->where('consecutivo', $movimiento->consecutivo)
-                    ->first();
-
-                if ($target) {
-                    $target->update($data);
-                } else {
-                    Movimiento::create($data);
+            // 🔹 Asignar libro contable si no lo tiene
+            if (!$movimiento->libro_contable_id) {
+                $estadoAbiertoId = \App\Models\LibroContableEstado::where('nombre', 'Abierto')->value('id');
+                $libroActual = \App\Models\LibroContable::where('estado_id', $estadoAbiertoId)->first();
+                if ($libroActual) {
+                    $movimiento->libro_contable_id = $libroActual->id;
                 }
             }
-        });
+
+            // ✅ Actualizar ingreso
+            $movimiento->update([
+                'fecha'       => $request->fecha,
+                'consecutivo' => $request->consecutivo ?? $movimiento->consecutivo,
+                'detalle'     => $request->detalle,
+                'concepto'    => $request->concepto,
+                'valor'       => $request->valor,
+                'libro_contable_id' => $movimiento->libro_contable_id,
+            ]);
+        } else {
+            // 🔹 Normalizar array de valores (quita separadores de miles y transforma)
+            $valoresNormalizados = collect($request->input('valor', []))
+                ->map(fn($v) => $this->normalizarNumero($v))
+                ->toArray();
+
+            $request->merge([
+                'valor' => $valoresNormalizados
+            ]);
+
+            $request->validate([
+                'fecha'           => 'required|date',
+                'consecutivo'     => 'nullable|string|max:50',
+                'detalle'         => 'required|string|max:255',
+                'concepto'        => 'required|string|max:255',
+                'movimiento_id'   => 'required|array',
+                'movimiento_id.*' => 'exists:movimientos,id',
+                'presupuesto_id'  => 'required|array',
+                'presupuesto_id.*'=> 'nullable|exists:presupuestos,id',
+                'valor'           => 'required|array',
+                'valor.*'         => 'numeric|min:0',
+            ]);
+
+            $submitted_ids = $request->input('movimiento_id', []);
+            $presupuestos  = $request->input('presupuesto_id', []);
+            $valores       = $request->input('valor', []);
+
+            DB::transaction(function () use ($submitted_ids, $presupuestos, $valores, $request, $movimiento) {
+                foreach ($submitted_ids as $index => $mov_id) {
+                    $data = [
+                        'fecha'         => $request->fecha,
+                        'consecutivo'   => $request->consecutivo ?? $movimiento->consecutivo,
+                        'detalle'       => $request->detalle,
+                        'concepto'      => $request->concepto,
+                        'presupuesto_id'=> $presupuestos[$index] ?? null,
+                        'valor'         => $valores[$index] ?? 0,
+                    ];
+
+                    // 🔹 Asignar libro contable si no lo tiene
+                    if (!$movimiento->libro_contable_id) {
+                        $estadoAbiertoId = \App\Models\LibroContableEstado::where('nombre', 'Abierto')->value('id');
+                        $libroActual = \App\Models\LibroContable::where('estado_id', $estadoAbiertoId)->first();
+                        if ($libroActual) {
+                            $data['libro_contable_id'] = $libroActual->id;
+                        }
+                    }
+
+                    $target = Movimiento::where('id', $mov_id)
+                        ->where('consecutivo', $movimiento->consecutivo)
+                        ->first();
+
+                    if ($target) {
+                        $target->update($data);
+                    } else {
+                        Movimiento::create($data);
+                    }
+                }
+            });
+        }
 
         return redirect()->route('libro.index')
             ->with('success', 'Registro actualizado correctamente ✅');
@@ -104,7 +153,7 @@ class MovimientoController extends Controller
 
         Movimiento::where('consecutivo', $movimiento->consecutivo)
             ->where('concepto', $movimiento->concepto)
-            ->where('tipo', $movimiento->tipo) // 👈 importante para no mezclar ingresos con egresos
+            ->where('tipo', $movimiento->tipo)
             ->delete();
 
         return redirect()->route('libro.index')
@@ -157,5 +206,23 @@ class MovimientoController extends Controller
                 'movimiento' => $movimiento
             ]);
         }
+    }
+
+    /**
+     * 🔹 Función auxiliar para normalizar valores numéricos
+     */
+    private function normalizarNumero($valor)
+    {
+        if ($valor === null || $valor === '') {
+            return 0;
+        }
+
+        // 1) Quitar separadores de miles (puntos)
+        $valor = str_replace('.', '', $valor);
+
+        // 2) Reemplazar coma decimal por punto
+        $valor = str_replace(',', '.', $valor);
+
+        return floatval($valor);
     }
 }

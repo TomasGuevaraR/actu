@@ -25,38 +25,28 @@
 
         <h1 class="text-xl font-bold text-[#0166b3]">
             <i class="bi bi-journal-text me-2"></i> Libro Contable
+            @if(isset($libroActual))
+                <span class="ml-2 text-gray-700 text-base font-medium">
+                    ({{ $libroActual->nombre }})
+                </span>
+            @endif
         </h1>
 
-        <!-- Botones cerrar/aprobar/rechazar con acceso seguro -->
-        <!-- Botones para tesorero: Cerrar libro -->
-@if(isset($libroActual) && $rolUsuario === 'tesorero' && $libroActual?->estado?->nombre === 'Abierto')
-    <form action="{{ route('libro.cerrar', $libroActual->id) }}" method="POST">
-        @csrf
-        <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition">
-            🔒 Cerrar Libro
-        </button>
-    </form>
-@endif
-
-<!-- Botones para aprobar/rechazar libro -->
-@if(isset($libroActual) && in_array($rolUsuario, ['pastor','fiscal']) && $libroActual?->estado?->nombre === 'Cerrado')
-    <form action="{{ route('libro.aprobar', $libroActual->id) }}" method="POST" class="inline">
-        @csrf
-        <button type="submit" class="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 transition">
-            ✅ Aprobar
-        </button>
-    </form>
-    <form action="{{ route('libro.rechazar', $libroActual->id) }}" method="POST" class="inline">
-        @csrf
-        <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition">
-            ❌ Rechazar
-        </button>
-    </form>
-@endif
+        <!-- Estado actual del libro -->
+        @if(isset($libroActual))
+            <span class="px-3 py-1 rounded-full text-sm font-semibold
+                @if($libroActual->estado === 'activo') bg-green-100 text-green-800
+                @elseif($libroActual->estado === 'cerrado') bg-yellow-100 text-yellow-800
+                @elseif($libroActual->estado === 'aprobado') bg-blue-100 text-blue-800
+                @else bg-gray-100 text-gray-800
+                @endif">
+                Estado: {{ ucfirst($libroActual->estado) }}
+            </span>
+        @endif
 
         <!-- Botones solo para tesorero -->
         @if ($rolUsuario === 'tesorero')
-            <div class="flex flex-col md:flex-row md:items-center gap-3 w-full md:w-auto">
+            <div class="flex flex-col md:flex-row md:items-center gap-3 w-full md:w-auto mt-2 md:mt-0">
                 <a href="{{ route('ingresos.create') }}"
                     class="bg-[#0d6efd] hover:bg-[#014a82] text-white font-bold py-1.5 px-3 rounded-full transition duration-300 shadow-md text-xs">
                     ➕ Ingreso
@@ -69,99 +59,104 @@
         @endif
     </div>
 
-    <!-- Tabla -->
-    <div class="card-body px-3 py-3">
-        <div class="overflow-x-auto">
-            <table class="min-w-full border border-gray-200 rounded shadow-sm text-xs">
-                <thead class="bg-[#0166b3] text-white text-xs">
-                    <tr>
-                        <th class="py-2 px-3 border">Fecha</th>
-                        <th class="py-2 px-3 border">Consecutivo</th>
-                        <th class="py-2 px-3 border">Detalle</th>
-                        <th class="py-2 px-3 border">Concepto</th>
-                        <th class="py-2 px-3 border">Casillas</th>
-                        <th class="py-2 px-3 border">Valor</th>
-                        <th class="py-2 px-3 border">Entrada</th>
-                        <th class="py-2 px-3 border">Salida</th>
-                        <th class="py-2 px-3 border">Saldo</th>
-                        <th class="py-2 px-3 border">Ver</th>
-                        @if ($rolUsuario === 'tesorero')
-                            <th class="py-2 px-3 border">Acciones</th>
-                        @endif
-                    </tr>
-                </thead>
-                <tbody class="text-xs text-gray-700">
-                    @php
-                        $totalEntradas = 0;
-                        $totalSalidas = 0;
-                        $ultimoSaldo = 0;
-                    @endphp
-
-                    @forelse ($movimientos as $mov)
-                        @php
-                            $entrada = (float) ($mov->total_ingreso ?? 0);
-                            $salida  = (float) ($mov->total_egreso ?? 0);
-                            $valorMostrar = $entrada > 0 ? $entrada : $salida;
-                            $totalEntradas += $entrada;
-                            $totalSalidas  += $salida;
-                            $ultimoSaldo = $mov->saldo_actual ?? $ultimoSaldo;
-                        @endphp
-                        <tr class="hover:bg-gray-100">
-                            <td class="py-2 px-3 border">{{ $mov->fecha }}</td>
-                            <td class="py-2 px-3 border">{{ $mov->consecutivo ?? '-' }}</td>
-                            <td class="py-2 px-3 border">{{ $mov->detalle }}</td>
-                            <td class="py-2 px-3 border">{{ $mov->concepto }}</td>
-                            <td class="py-2 px-3 border">{{ $mov->casillas ?? '-' }}</td>
-                            <td class="py-2 px-3 border">{{ number_format($valorMostrar, 0, ',', '.') }}</td>
-                            <td class="py-2 px-3 border text-green-600 font-semibold">
-                                {{ $entrada > 0 ? number_format($entrada, 0, ',', '.') : '-' }}
-                            </td>
-                            <td class="py-2 px-3 border text-red-600 font-semibold">
-                                {{ $salida > 0 ? number_format($salida, 0, ',', '.') : '-' }}
-                            </td>
-                            <td class="py-2 px-3 border font-semibold">
-                                {{ number_format($mov->saldo_actual ?? 0, 0, ',', '.') }}
-                            </td>
-
-                            <td class="py-2 px-3 border text-center">
-                                <button class="text-indigo-600 hover:text-indigo-800 text-sm" 
-                                        onclick="mostrarDetalles({{ $mov->id }})"
-                                        title="Ver detalles">
-                                    🔍
-                                </button>
-                            </td>
-
+    <!-- Tabla de movimientos -->
+    @if(isset($libroActual))
+        <div class="card-body px-3 py-3">
+            <div class="overflow-x-auto">
+                <table class="min-w-full border border-gray-200 rounded shadow-sm text-xs">
+                    <thead class="bg-[#0166b3] text-white text-xs">
+                        <tr>
+                            <th class="py-2 px-3 border">Fecha</th>
+                            <th class="py-2 px-3 border">Consecutivo</th>
+                            <th class="py-2 px-3 border">Detalle</th>
+                            <th class="py-2 px-3 border">Concepto</th>
+                            <th class="py-2 px-3 border">Casillas</th>
+                            <th class="py-2 px-3 border">Valor</th>
+                            <th class="py-2 px-3 border">Entrada</th>
+                            <th class="py-2 px-3 border">Salida</th>
+                            <th class="py-2 px-3 border">Saldo</th>
+                            <th class="py-2 px-3 border">Ver</th>
                             @if ($rolUsuario === 'tesorero')
-                                <td class="py-2 px-3 border text-center">
-                                    <a href="{{ route('movimientos.edit', $mov->id) }}" class="text-blue-600 hover:text-blue-800 mx-1 text-sm" title="Editar">✏️</a>
-                                    <button type="button" 
-                                            class="text-red-600 hover:text-red-800 mx-1 text-sm" 
-                                            title="Eliminar"
-                                            onclick="abrirModalEliminar('{{ route('movimientos.destroy', $mov->id) }}')">🗑️</button>
-                                </td>
+                                <th class="py-2 px-3 border">Acciones</th>
                             @endif
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="{{ $rolUsuario === 'tesorero' ? 11 : 10 }}" class="text-center py-4 text-gray-500">No hay movimientos registrados.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
+                    </thead>
+                    <tbody class="text-xs text-gray-700">
+                        @php
+                            $totalEntradas = 0;
+                            $totalSalidas = 0;
+                            $ultimoSaldo = 0;
+                        @endphp
 
-                <tfoot class="bg-gray-100 text-xs font-semibold">
-                    <tr>
-                        <td colspan="6" class="py-2 px-3 text-right">Totales:</td>
-                        <td class="py-2 px-3 text-green-700">{{ number_format($totalEntradas, 0, ',', '.') }}</td>
-                        <td class="py-2 px-3 text-red-700">{{ number_format($totalSalidas, 0, ',', '.') }}</td>
-                        <td class="py-2 px-3 text-black">{{ number_format($ultimoSaldo ?? 0, 0, ',', '.') }}</td>
-                        <td colspan="{{ $rolUsuario === 'tesorero' ? 2 : 1 }}"></td>
-                    </tr>
-                </tfoot>
-            </table>
+                        @forelse ($movimientos as $mov)
+                            @php
+                                $entrada = $mov->tipo === 'ingreso' ? (float) $mov->valor : 0;
+                                $salida  = $mov->tipo === 'egreso' ? (float) $mov->valor : 0;
+                                $valorMostrar = $mov->valor ?? 0;
+                                $totalEntradas += $entrada;
+                                $totalSalidas  += $salida;
+                                $ultimoSaldo   = $mov->saldo ?? $ultimoSaldo;
+                            @endphp
+                            <tr class="hover:bg-gray-100">
+                                <td class="py-2 px-3 border">{{ $mov->fecha }}</td>
+                                <td class="py-2 px-3 border">{{ $mov->consecutivo ?? '-' }}</td>
+                                <td class="py-2 px-3 border">{{ $mov->detalle }}</td>
+                                <td class="py-2 px-3 border">{{ $mov->concepto }}</td>
+                                <td class="py-2 px-3 border">{{ $mov->casilla ?? '-' }}</td>
+                                <td class="py-2 px-3 border">{{ number_format($valorMostrar, 0, ',', '.') }}</td>
+                                <td class="py-2 px-3 border text-green-600 font-semibold">
+                                    {{ $entrada > 0 ? number_format($entrada, 0, ',', '.') : '-' }}
+                                </td>
+                                <td class="py-2 px-3 border text-red-600 font-semibold">
+                                    {{ $salida > 0 ? number_format($salida, 0, ',', '.') : '-' }}
+                                </td>
+                                <td class="py-2 px-3 border font-semibold">
+                                    {{ number_format($mov->saldo ?? 0, 0, ',', '.') }}
+                                </td>
+                                <td class="py-2 px-3 border text-center">
+                                    <button class="text-indigo-600 hover:text-indigo-800 text-sm" 
+                                            onclick="mostrarDetalles({{ $mov->id }})"
+                                            title="Ver detalles">
+                                        🔍
+                                    </button>
+                                </td>
+                                @if ($rolUsuario === 'tesorero')
+                                    <td class="py-2 px-3 border text-center">
+                                        <a href="{{ route('movimientos.edit', $mov->id) }}" class="text-blue-600 hover:text-blue-800 mx-1 text-sm" title="Editar">✏️</a>
+                                        <button type="button" 
+                                                class="text-red-600 hover:text-red-800 mx-1 text-sm" 
+                                                title="Eliminar"
+                                                onclick="abrirModalEliminar('{{ route('movimientos.destroy', $mov->id) }}')">🗑️</button>
+                                    </td>
+                                @endif
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="{{ $rolUsuario === 'tesorero' ? 11 : 10 }}" class="text-center py-4 text-gray-500">No hay movimientos registrados.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                    <tfoot class="bg-gray-100 text-xs font-semibold">
+                        <tr>
+                            <td colspan="6" class="py-2 px-3 text-right">Totales:</td>
+                            <td class="py-2 px-3 text-green-700">{{ number_format($totalEntradas, 0, ',', '.') }}</td>
+                            <td class="py-2 px-3 text-red-700">{{ number_format($totalSalidas, 0, ',', '.') }}</td>
+                            <td class="py-2 px-3 text-black">{{ number_format($ultimoSaldo ?? 0, 0, ',', '.') }}</td>
+                            <td colspan="{{ $rolUsuario === 'tesorero' ? 2 : 1 }}"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         </div>
-    </div>
+    @else
+        <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+            No se encontró ningún libro contable activo.
+        </div>
+    @endif
 </div>
 @endif
+
+<!-- Modales -->
 
 <!-- Modal Ingreso -->
 <div id="modalIngreso" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

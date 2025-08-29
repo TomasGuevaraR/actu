@@ -14,57 +14,56 @@
                 <div>
                     <label for="fecha" class="block">Fecha</label>
                     <input type="date" name="fecha" class="form-control"
-                        value="{{ $movimiento->fecha }}" required>
+                        value="{{ old('fecha', $movimiento->fecha) }}" required>
                 </div>
 
                 <div>
                     <label for="consecutivo" class="block">Consecutivo</label>
                     <input type="text" name="consecutivo" class="form-control"
-                        value="{{ $movimiento->consecutivo }}">
+                        value="{{ old('consecutivo', $movimiento->consecutivo) }}">
                 </div>
             </div>
 
             <div class="mb-4">
                 <label for="detalle" class="block">Detalle</label>
                 <input type="text" name="detalle" class="form-control"
-                    value="{{ $movimiento->detalle }}" required>
+                    value="{{ old('detalle', $movimiento->detalle) }}" required>
             </div>
 
             <div class="mb-4">
                 <label for="concepto" class="block">Concepto</label>
                 <input type="text" name="concepto" class="form-control"
-                    value="{{ $movimiento->concepto }}" required>
+                    value="{{ old('concepto', $movimiento->concepto) }}" required>
             </div>
 
             <!-- Movimientos del grupo -->
             <h3 class="text-lg font-semibold text-gray-700 mb-2">Casillas y valores</h3>
             <div id="casillas-container">
                 @foreach($movimientos as $index => $mov)
-    <div class="grid grid-cols-2 gap-4 mb-3 border p-3 rounded-md bg-gray-50">
-        <!-- id del movimiento para mapear exacto en el update -->
-        <input type="hidden" name="movimiento_id[]" value="{{ $mov->id }}">
+                    <div class="grid grid-cols-2 gap-4 mb-3 border p-3 rounded-md bg-gray-50">
+                        <!-- id del movimiento para mapear exacto en el update -->
+                        <input type="hidden" name="movimiento_id[]" value="{{ $mov->id }}">
 
-        <div>
-            <label>Casilla</label>
-            <select name="presupuesto_id[]" class="form-control" required>
-                <option value="">Seleccione...</option>
-                @foreach($casillas as $casilla)
-                    <option value="{{ $casilla->id }}"
-                        {{ $mov->presupuesto_id == $casilla->id ? 'selected' : '' }}>
-                        {{ $casilla->nombre_casilla }}
-                    </option>
+                        <div>
+                            <label>Casilla</label>
+                            <select name="presupuesto_id[]" class="form-control" required>
+                                <option value="">Seleccione...</option>
+                                @foreach($casillas as $casilla)
+                                    <option value="{{ $casilla->id }}"
+                                        {{ $mov->presupuesto_id == $casilla->id ? 'selected' : '' }}>
+                                        {{ $casilla->nombre_casilla }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label>Valor</label>
+                            <input type="number" step="0.01" name="valor[]" class="form-control"
+                                value="{{ old('valor.' . $index, number_format($mov->valor, 2, '.', '')) }}" required>
+                        </div>
+                    </div>
                 @endforeach
-            </select>
-        </div>
-        <div>
-            <label>Valor</label>
-            <input type="number" name="valor[]" class="form-control"
-                value="{{ $mov->valor }}" required>
-        </div>
-    </div>
-@endforeach
-
-
             </div>
 
             <div class="flex justify-between mt-6">

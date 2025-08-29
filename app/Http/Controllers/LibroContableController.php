@@ -3,114 +3,67 @@
 namespace App\Http\Controllers;
 
 use App\Models\LibroContable;
-use App\Models\LibroContableEstado;
-use Illuminate\Http\Request;
 use App\Models\Movimiento;
-use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class LibroContableController extends Controller
 {
-    /**
-     * Mostrar el libro actual y sus movimientos.
-     */
     public function index()
     {
-        $rolUsuario = auth()->guard('web')->user()->rol ?? '';
+        $rolUsuario = Auth::user()->rol ?? 'sin-rol';
 
-        // Trae el libro contable más reciente
-        $libroActual = LibroContable::latest()->first();
+        // Si es secretario, mostrar mensaje de no permisos
+        if ($rolUsuario === 'secretario') {
+            return view('libro.index', compact('rolUsuario'));
+        }
 
-        // Si no existe ningún libro, crear automáticamente Enero 2025
+        // Buscar libro con estado 'activo'
+        $libroActual = LibroContable::where('estado', 'activo')
+            ->orderBy('anio_libro', 'desc')
+            ->orderBy('mes_libro', 'desc')
+            ->first();
+
+        // Si no hay libro activo, buscar el último libro
         if (!$libroActual) {
-            $estadoAbierto = LibroContableEstado::where('nombre', 'Abierto')->first();
+            $libroActual = LibroContable::orderBy('anio_libro', 'desc')
+                ->orderBy('mes_libro', 'desc')
+                ->first();
+        }
 
+        // Si no existe ningún libro, crear uno nuevo
+        if (!$libroActual) {
             $libroActual = LibroContable::create([
-                'nombre'         => 'Enero 2025',
-                'mes_libro'      => 1,
-                'anio_libro'     => 2025,
-                'estado_id'      => $estadoAbierto->id,
-                'monto'          => 0,
+                'nombre'     => 'Enero ' . date('Y'),
+                'mes_libro'  => 1,
+                'anio_libro' => date('Y'),
+                'estado'     => 'activo',
+                'monto'      => 0,
             ]);
         }
 
-        // Cargar los movimientos de ese libro
-        $movimientos = Movimiento::where('libro_contable_id', $libroActual->id)->get();
+        // Obtener movimientos del libro actual
+        $movimientos = $libroActual->movimientos()->get();
 
-        return view('libro.index', compact('rolUsuario', 'movimientos', 'libroActual'));
+        return view('libro.index', compact('rolUsuario', 'libroActual', 'movimientos'));
     }
 
-    /**
-     * Cerrar libro (tesorero).
-     */
-    public function cerrar($id)
-    {
-        $libro = LibroContable::findOrFail($id);
-        $estadoAbierto = LibroContableEstado::where('nombre', 'Abierto')->first();
-        $estadoCerrado = LibroContableEstado::where('nombre', 'Cerrado')->first();
-
-        if ($libro->estado_id != $estadoAbierto->id) {
-            return redirect()->back()->with('error', 'Solo se puede cerrar un libro que esté abierto.');
-        }
-
-        // Cerrar libro actual
-        $libro->estado_id = $estadoCerrado->id;
-        $libro->save();
-
-        // Crear siguiente libro automáticamente
-        $siguienteMes = $libro->mes_libro + 1;
-        $siguienteAnio = $libro->anio_libro;
-
-        if ($siguienteMes > 12) {
-            $siguienteMes = 1;
-            $siguienteAnio++;
-        }
-
-        $estadoAbierto = LibroContableEstado::where('nombre', 'Abierto')->first();
-
-        LibroContable::create([
-            'nombre'         => Carbon::create($siguienteAnio, $siguienteMes, 1)
-                                    ->locale('es')
-                                    ->translatedFormat('F Y'),
-            'mes_libro'      => $siguienteMes,
-            'anio_libro'     => $siguienteAnio,
-            'estado_id'      => $estadoAbierto->id,
-            'monto'          => 0,
-        ]);
-
-        return redirect()->back()->with('success', 'El libro contable se cerró y se abrió automáticamente el siguiente.');
-    }
-
-    /**
-     * Aprobar libro (pastor/fiscal).
-     */
     public function aprobar($id)
     {
         $libro = LibroContable::findOrFail($id);
-        $estadoCerrado = LibroContableEstado::where('nombre', 'Cerrado')->first();
-        $estadoAprobado = LibroContableEstado::where('nombre', 'Aprobado')->first();
-
-        if ($libro->estado_id != $estadoCerrado->id) {
-            return redirect()->back()->with('error', 'Solo se puede aprobar un libro que esté cerrado.');
-        }
-
-        $libro->estado_id = $estadoAprobado->id;
+        $libro->estado = 'aprobado';
         $libro->save();
 
-        return redirect()->back()->with('success', 'El libro contable se aprobó correctamente.');
+        return redirect()->route('libro.index')->with('success', 'Libro aprobado correctamente.');
     }
 
-    /**
-     * Rechazar libro (pastor/fiscal).
-     */
     public function rechazar($id)
     {
         $libro = LibroContable::findOrFail($id);
-        $estadoAbierto = LibroContableEstado::where('nombre', 'Abierto')->first();
-
-        // Vuelve a abierto para que el tesorero pueda corregir
-        $libro->estado_id = $estadoAbierto->id;
+        $libro->estado = 'activo';
         $libro->save();
+        
 
-        return redirect()->back()->with('success', 'El libro contable fue rechazado y reabierto para corrección.');
+        return redirect()->route('libro.index')->with('success', 'Libro rechazado y reabierto para corrección.');
     }
 }

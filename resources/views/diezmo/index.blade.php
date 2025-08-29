@@ -2,7 +2,9 @@
 
 @section('content')
 @php
+    use App\Models\LibroContable;
     $rolUsuario = Auth::user()->rol ?? '';
+    $libroActivo = LibroContable::where('estado', 'activo')->first();
 @endphp
 
 @if (in_array($rolUsuario, ['tesorero', 'anciano']))
@@ -17,6 +19,23 @@
             Registrar Diezmo y Ofrenda
         </h2>
 
+        {{-- 📌 Mostrar libro contable activo --}}
+        @if($libroActivo)
+            <div class="mb-4 p-3 bg-green-50 border border-green-200 rounded">
+                <p class="text-sm text-green-800">
+                    Libro contable activo: <strong>{{ $libroActivo->nombre }}
+                </p>
+            </div>
+        @else
+            <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded">
+                <p class="text-sm text-red-800 font-bold">
+                    🚫 No hay un libro contable activo. Activa un libro para poder registrar diezmos.
+                </p>
+            </div>
+        @endif
+
+        {{-- 📌 Si hay libro activo se permite registrar --}}
+        @if($libroActivo)
         <form id="formDiezmo" action="{{ route('diezmo.store') }}" method="POST">
             @csrf
 
@@ -73,6 +92,7 @@
                 </button>
             </div>
         </form>
+        @endif
     </div>
 </div>
 

@@ -15,7 +15,7 @@
             </div>
         @endif
 
-        {{-- Importante: enviamos al update de movimientos y cumplimos con los arrays requeridos --}}
+        {{-- Editar ingreso (NO arrays, porque es un solo movimiento) --}}
         <form action="{{ route('movimientos.update', $movimiento->id) }}" method="POST" class="space-y-4">
             @csrf
             @method('PUT')
@@ -71,24 +71,19 @@
                 >
             </div>
 
-            {{-- ===== Campos requeridos por MovimientoController@update (arrays) ===== --}}
-            <input type="hidden" name="movimiento_id[]" value="{{ $movimiento->id }}">
-            <input type="hidden" name="presupuesto_id[]" value=""> {{-- null para ingresos --}}
-
             {{-- Valor (monto del ingreso) --}}
             <div>
                 <label for="valor" class="block text-sm font-medium text-gray-700">Monto</label>
                 <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     id="valor"
-                    name="valor[]"
-                    value="{{ old('valor.0', $movimiento->valor) }}"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    name="valor"
+                    value="{{ old('valor', number_format($movimiento->valor, 2, ',', '.')) }}"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-right"
                     required
                 >
+                <p class="text-xs text-gray-500 mt-1">Ejemplo: 1.455.600,00</p>
             </div>
-            {{-- ===================================================================== --}}
 
             <div class="flex justify-between pt-2">
                 <a href="{{ route('libro.index') }}" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-700">

@@ -47,11 +47,13 @@ Route::middleware(['auth', PreventBackHistory::class])->group(function () {
     Route::get('/dashboard', fn () => view('dashboard'))->name('dashboard');
 
     // 📚 Libro Contable
-    Route::get('/libro-contable', fn () => view('libro.index'))->name('libro-contable.index');
+    
     Route::get('/libro', [LibroController::class, 'index'])->name('libro.index');
     Route::get('/movimientos/{id}/detalles', [MovimientoController::class, 'detalles']);
     Route::post('/libro-contable/{id}/cerrar',  [LibroContableController::class, 'cerrar'])->name('libro.cerrar');
     Route::post('/libro-contable/{id}/aprobar', [LibroContableController::class, 'aprobar'])->name('libro.aprobar');
+    Route::get('/libro-contable', [LibroContableController::class, 'index'])->name('libro.index');
+
 
     Route::middleware(['auth', 'checkRol:tesorero'])->group(function() {
     Route::post('/libro-contable/{id}/cerrar', [LibroContableController::class, 'cerrar'])->name('libro.cerrar');
