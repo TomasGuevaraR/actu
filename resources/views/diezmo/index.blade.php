@@ -3,8 +3,33 @@
 @section('content')
 @php
     use App\Models\LibroContable;
+    use Carbon\Carbon;
     $rolUsuario = Auth::user()->rol ?? '';
     $libroActivo = LibroContable::where('estado', 'activo')->first();
+    
+    // 🔹 Calcular fechas mín y máx basándose en mes_libro y anio_libro
+    $fechaMin = date('d-m-Y');
+    $fechaMax = date('d-m-Y');
+    $fechaDefault = date('d-m-Y');
+    
+    if ($libroActivo) {
+        $fechaInicio = Carbon::createFromDate($libroActivo->anio_libro, $libroActivo->mes_libro, 1)->startOfMonth();
+        $fechaFin = Carbon::createFromDate($libroActivo->anio_libro, $libroActivo->mes_libro, 1)->endOfMonth();
+        
+        $fechaMin = $fechaInicio->format('Y-m-d');
+        $fechaMax = $fechaFin->format('Y-m-d');
+        
+        // 🔹 Fecha por defecto (hoy si está en rango, sino la fecha de inicio del libro)
+        $hoy = Carbon::today();
+        
+        if ($hoy->lt($fechaInicio)) {
+            $fechaDefault = $fechaMin;
+        } elseif ($hoy->gt($fechaFin)) {
+            $fechaDefault = $fechaMax;
+        } else {
+            $fechaDefault = $hoy->format('Y-m-d');
+        }
+    }
 @endphp
 
 @if (in_array($rolUsuario, ['tesorero', 'anciano']))
@@ -21,9 +46,20 @@
 
         {{-- 📌 Mostrar libro contable activo --}}
         @if($libroActivo)
+            @php
+                $nombresMeses = [
+                    1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+                    5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+                    9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+                ];
+                $nombreMes = $nombresMeses[$libroActivo->mes_libro] ?? 'Desconocido';
+                $fechaInicio = Carbon::createFromDate($libroActivo->anio_libro, $libroActivo->mes_libro, 1)->startOfMonth();
+                $fechaFin = Carbon::createFromDate($libroActivo->anio_libro, $libroActivo->mes_libro, 1)->endOfMonth();
+            @endphp
             <div class="mb-4 p-3 bg-green-50 border border-green-200 rounded">
                 <p class="text-sm text-green-800">
-                    Libro contable activo: <strong>{{ $libroActivo->nombre }}
+                    📚 Libro contable activo: <strong>{{ $libroActivo->nombre }}</strong><br>
+                    📅 Período: <strong>{{ $nombreMes }} {{ $libroActivo->anio_libro }}</strong> ({{ $fechaInicio->format('d/m/Y') }} - {{ $fechaFin->format('d/m/Y') }})
                 </p>
             </div>
         @else
@@ -34,6 +70,17 @@
             </div>
         @endif
 
+        {{-- 📌 Mostrar errores de validación --}}
+        @if ($errors->any())
+            <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded">
+                <ul class="text-sm text-red-800">
+                    @foreach ($errors->all() as $error)
+                        <li>❌ {{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         {{-- 📌 Si hay libro activo se permite registrar --}}
         @if($libroActivo)
         <form id="formDiezmo" action="{{ route('diezmo.store') }}" method="POST">
@@ -41,19 +88,42 @@
 
             <!-- Fecha -->
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700">Fecha</label>
-                <input type="date" name="fecha" required class="form-control" value="{{ date('Y-m-d') }}" />
+                <label class="block text-sm font-medium text-gray-700">
+                    Fecha 
+                    @if($libroActivo)
+                        @php
+                            $nombresMeses = [
+                                1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+                                5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+                                9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+                            ];
+                            $nombreMes = $nombresMeses[$libroActivo->mes_libro] ?? 'Desconocido';
+                            $fechaInicio = Carbon::createFromDate($libroActivo->anio_libro, $libroActivo->mes_libro, 1)->startOfMonth();
+                            $fechaFin = Carbon::createFromDate($libroActivo->anio_libro, $libroActivo->mes_libro, 1)->endOfMonth();
+                        @endphp
+                        <span class="text-xs text-gray-500">
+                            
+                        </span>
+                    @endif
+                </label>
+                <input type="date" 
+                       name="fecha" 
+                       required 
+                       class="form-control" 
+                       value="{{ old('fecha', $fechaDefault) }}"
+                       min="{{ $fechaMin }}"
+                       max="{{ $fechaMax }}" />
             </div>
 
             <!-- Detalle y concepto -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Detalle</label>
-                    <input type="text" name="detalle" class="form-control" placeholder="Ej: Servicio dominical" required>
+                    <input type="text" name="detalle" class="form-control" placeholder="Ej: Servicio dominical" required value="{{ old('detalle') }}">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Concepto</label>
-                    <input type="text" name="concepto" class="form-control" placeholder="Ej: Diezmo y Ofrenda general" required>
+                    <input type="text" name="concepto" class="form-control" placeholder="Ej: Diezmo y Ofrenda general" required value="{{ old('concepto') }}">
                 </div>
             </div>
 
@@ -75,7 +145,7 @@
             <!-- Ofrenda -->
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700">Valor Ofrenda</label>
-                <input type="number" name="ofrenda" id="ofrenda" class="form-control" value="0" min="0">
+                <input type="number" name="ofrenda" id="ofrenda" class="form-control" value="{{ old('ofrenda', 0) }}" min="0">
             </div>
 
             <!-- Total general -->

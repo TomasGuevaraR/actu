@@ -14,19 +14,40 @@ class DiezmoController extends Controller
     public function index()
     {
         $miembros = Miembro::selectRaw("CONCAT(nombres, ' ', apellidos) as nombre_completo")->pluck('nombre_completo');
-        return view('diezmo.index', compact('miembros'));
+        
+        // 🔹 Obtener el libro contable activo para las fechas
+        $libroActivo = LibroContable::where('estado', 'activo')->first();
+        
+        return view('diezmo.index', compact('miembros', 'libroActivo'));
     }
 
     public function create()
     {
         $miembros = Miembro::all();
-        return view('diezmo.index', compact('miembros'));
+        $libroActivo = LibroContable::where('estado', 'activo')->first();
+        return view('diezmo.index', compact('miembros', 'libroActivo'));
     }
 
     public function store(Request $request)
     {
+        // 🔹 Buscar el libro contable activo primero
+        $libro = LibroContable::where('estado', 'activo')->first();
+
+        if (!$libro) {
+            return redirect()->back()->with('error', 'No hay un libro contable activo. Activa un libro para poder registrar diezmos.');
+        }
+
+        // 🔹 Calcular fechas basándose en mes_libro y anio_libro
+        $fechaInicio = Carbon::createFromDate($libro->anio_libro, $libro->mes_libro, 1)->startOfMonth();
+        $fechaFin = Carbon::createFromDate($libro->anio_libro, $libro->mes_libro, 1)->endOfMonth();
+        
         $request->validate([
-            'fecha'     => 'required|date',
+            'fecha'     => [
+                'required',
+                'date',
+                'after_or_equal:' . $fechaInicio->format('Y-m-d'),
+                'before_or_equal:' . $fechaFin->format('Y-m-d')
+            ],
             'detalle'   => 'required|string',
             'concepto'  => 'required|string',
             'nombres'   => 'required|array',
@@ -34,14 +55,11 @@ class DiezmoController extends Controller
             'valores'   => 'required|array',
             'valores.*' => 'required|numeric|min:0',
             'ofrenda'   => 'nullable|numeric|min:0',
+        ], [
+            // 🔹 Mensaje personalizado para la validación de fecha
+            'fecha.after_or_equal' => 'La fecha debe estar entre ' . $fechaInicio->format('d/m/Y') . ' y ' . $fechaFin->format('d/m/Y') . ' (rango del libro activo: ' . $libro->nombre . ')',
+            'fecha.before_or_equal' => 'La fecha debe estar entre ' . $fechaInicio->format('d/m/Y') . ' y ' . $fechaFin->format('d/m/Y') . ' (rango del libro activo: ' . $libro->nombre . ')',
         ]);
-
-        // 🔹 Buscar el libro contable activo
-        $libro = LibroContable::where('estado', 'activo')->first();
-
-        if (!$libro) {
-            return redirect()->back()->with('error', 'No hay un libro contable activo. Activa un libro para poder registrar diezmos.');
-        }
 
         $fecha = $request->fecha;
         $detalle = $request->detalle;
