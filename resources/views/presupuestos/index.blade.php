@@ -84,12 +84,13 @@
                         <tbody class="text-sm text-gray-700">
                             @forelse($presupuestos as $presupuesto)
                                 @php
-                                    $gastado = $presupuesto->movimientos->where('tipo', 'egreso')->sum('valor');
+                                    $gastado = $presupuesto->egresos->sum('valor'); // ahora suma de egresos
                                     $mes_actual = now()->month;
                                     $total_anual = $presupuesto->valor_mensual * 12;
                                     $saldo_disponible = ($presupuesto->valor_mensual * $mes_actual) - $gastado;
                                     $faltante = $total_anual - $gastado;
                                 @endphp
+
                                 <tr class="hover:bg-gray-100">
                                     <td class="py-2 px-4 border">{{ $presupuesto->nombre_casilla }}</td>
                                     <td class="py-2 px-4 border capitalize">{{ $presupuesto->categoria }}</td>

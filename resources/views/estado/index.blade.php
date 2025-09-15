@@ -13,8 +13,8 @@
     <h2 class="text-2xl font-bold text-red-600">Acceso denegado</h2>
     <p class="text-gray-700 mt-3">No tienes permisos para acceder a esta sección.</p>
     <a href="{{ route('dashboard') }}"
-       class="inline-flex items-center mt-6 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-800 transition">
-       <i class="fas fa-arrow-left mr-2"></i> Volver al Dashboard
+        class="inline-flex items-center mt-6 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-800 transition">
+        <i class="fas fa-arrow-left mr-2"></i> Volver al Dashboard
     </a>
 </div>
 @else

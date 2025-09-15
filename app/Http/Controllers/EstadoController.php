@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Egreso;
 use Illuminate\Http\Request;
 use App\Models\Estado;
 use App\Models\Movimiento;
@@ -25,9 +26,8 @@ class EstadoController extends Controller
                 ->sum('valor');
 
             // Salidas desde movimientos
-            $salidas = Movimiento::whereYear('fecha', $anio)
+            $salidas = Egreso::whereYear('fecha', $anio)
                 ->whereMonth('fecha', $mes)
-                ->where('tipo', 'egreso')
                 ->sum('valor');
 
             // Si es enero y hay saldo inicial registrado manual, usarlo

@@ -6,18 +6,20 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up(): void
+    /**
+     * Run the migrations.
+     */
+    public function up()
 {
     Schema::table('movimientos', function (Blueprint $table) {
-        $table->foreignId('libro_contable_id')->nullable()->constrained('libros_contables')->onDelete('cascade');
+        $table->unsignedBigInteger('grupo_id')->nullable()->after('id');
     });
 }
 
-public function down(): void
+public function down()
 {
     Schema::table('movimientos', function (Blueprint $table) {
-        $table->dropForeign(['libro_contable_id']);
-        $table->dropColumn('libro_contable_id');
+        $table->dropColumn('grupo_id');
     });
 }
 

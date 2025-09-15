@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Presupuesto extends Model
 {
-    // Permitir asignación masiva en estos campos
+    use HasFactory;
+
     protected $fillable = [
         'nombre_casilla',
         'categoria',
@@ -15,9 +17,9 @@ class Presupuesto extends Model
         'responsable',
     ];
 
-    // Relación: un presupuesto tiene muchos movimientos
-    public function movimientos()
+    // Relación con egresos
+    public function egresos()
     {
-        return $this->hasMany(Movimiento::class);
+        return $this->hasMany(Egreso::class, 'presupuesto_id');
     }
 }

@@ -63,6 +63,14 @@
                 Ver Reporte de Diezmo
             </a>
         </div>
+        {{-- Botón para ir al reporte de Diezmo --}}
+        <div class="bg-white p-4 rounded shadow flex flex-col items-center justify-center">
+            <h2 class="text-xl font-semibold text-blue-700 mb-4">Libro Contable</h2>
+            <p class="text-gray-600 mb-4">Ver reporte de libro Contable.</p>
+            <a href="{{ route('reporte.libros') }}" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-800">
+                Ver Reporte de Libros Contables
+            </a>
+        </div>
     </div>
 </div>
 @else

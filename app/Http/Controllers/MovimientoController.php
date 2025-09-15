@@ -7,12 +7,14 @@ use App\Models\Movimiento;
 use App\Models\Presupuesto;
 use App\Models\Diezmo;
 use Illuminate\Support\Facades\DB;
+use App\Models\Egreso;
 
 class MovimientoController extends Controller
 {
-    /**
-     * Editar movimiento
-     */
+    
+    
+
+
     public function edit($id)
     {
         $movimiento = Movimiento::findOrFail($id);
@@ -163,50 +165,48 @@ class MovimientoController extends Controller
     /**
      * Retornar detalles para el modal dinámico (Ingreso o Egreso)
      */
-    public function detalles($id)
-    {
-        $movimiento = Movimiento::findOrFail($id);
+   public function detalles($id)
+{
+    $movimiento = Movimiento::findOrFail($id);
 
-        if ($movimiento->tipo === 'ingreso') {
-            $diezmos = Diezmo::where('movimiento_id', $movimiento->id)->get();
+    if ($movimiento->tipo === 'ingreso') {
+        $diezmos = Diezmo::where('movimiento_id', $movimiento->id)->get();
 
-            $detalles = $diezmos->map(function ($d) {
-                return [
-                    'nombre' => $d->nombre ?? '(sin nombre)',
-                    'valor'  => (float) $d->valor,
-                    'fecha'  => $d->fecha
-                        ? (is_a($d->fecha, \Carbon\Carbon::class) ? $d->fecha->format('Y-m-d') : (string) $d->fecha)
-                        : null,
-                ];
-            });
+        $detalles = $diezmos->map(function ($d) {
+            return [
+                'nombre' => $d->nombre ?? '(sin nombre)',
+                'valor'  => (float) $d->valor,
+                'fecha'  => $d->fecha
+                    ? (is_a($d->fecha, \Carbon\Carbon::class) ? $d->fecha->format('Y-m-d') : (string) $d->fecha)
+                    : null,
+            ];
+        });
 
-            return response()->json([
-                'tipo' => 'ingreso',
-                'detalles' => $detalles,
-                'movimiento' => $movimiento
-            ]);
-        } else {
-            $movimientos = Movimiento::with('presupuesto:id,nombre_casilla')
-                ->where('consecutivo', $movimiento->consecutivo)
-                ->where('concepto', $movimiento->concepto)
-                ->where('tipo', 'egreso')
-                ->orderBy('id')
-                ->get();
+        return response()->json([
+            'tipo' => 'ingreso',
+            'detalles' => $detalles,
+            'movimiento' => $movimiento
+        ]);
+    } else {
+        // ✅ Usamos tabla egresos directamente
+        $egresos = \App\Models\Egreso::with('presupuesto:id,nombre_casilla')
+            ->where('movimiento_id', $movimiento->id)
+            ->get();
 
-            $detalles = $movimientos->map(function ($m) {
-                return [
-                    'casilla' => optional($m->presupuesto)->nombre_casilla ?? '(sin casilla)',
-                    'valor'   => (float) $m->valor,
-                ];
-            });
+        $detalles = $egresos->map(function ($e) {
+            return [
+                'casilla' => optional($e->presupuesto)->nombre_casilla ?? '(sin casilla)',
+                'valor'   => (float) $e->valor,
+            ];
+        });
 
-            return response()->json([
-                'tipo' => 'egreso',
-                'detalles' => $detalles,
-                'movimiento' => $movimiento
-            ]);
-        }
+        return response()->json([
+            'tipo' => 'egreso',
+            'detalles' => $detalles,
+            'movimiento' => $movimiento
+        ]);
     }
+}
 
     /**
      * 🔹 Función auxiliar para normalizar valores numéricos

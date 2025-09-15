@@ -50,8 +50,9 @@ Route::middleware(['auth', PreventBackHistory::class])->group(function () {
     
     Route::get('/libro', [LibroController::class, 'index'])->name('libro.index');
     Route::get('/movimientos/{id}/detalles', [MovimientoController::class, 'detalles']);
-    Route::post('/libro-contable/{id}/cerrar',  [LibroContableController::class, 'cerrar'])->name('libro.cerrar');
-    Route::post('/libro-contable/{id}/aprobar', [LibroContableController::class, 'aprobar'])->name('libro.aprobar');
+    Route::post('/libro/{id}/cerrar', [LibroContableController::class, 'cerrar'])->name('libro.cerrar');
+    Route::post('/libro/{id}/aprobar', [LibroContableController::class, 'aprobar'])->name('libro.aprobar');
+    Route::post('/libro/{id}/rechazar', [LibroContableController::class, 'rechazar'])->name('libro.rechazar');
     Route::get('/libro-contable', [LibroContableController::class, 'index'])->name('libro.index');
 
 
@@ -105,10 +106,17 @@ Route::middleware(['auth', 'checkRol:pastor,fiscal'])->group(function() {
     Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
     Route::get('/reporte/diezmo', [ReporteController::class, 'diezmo'])->name('reporte.diezmo');
     Route::get('/reporte/diezmos/excel', [ReporteController::class, 'exportarCSV'])->name('reporte.diezmos.excel');
+    Route::get('/reporte/libros', [ReporteController::class, 'libros'])->name('reporte.libros');
+    Route::get('/reportes/libros/exportar', [ReporteController::class, 'exportarLibrosCSV'])->name('reportes.libros.exportar');
+    
+
 
     // 💸 Egresos
     Route::get('/egresos/create', [EgresoController::class, 'create'])->name('egresos.create');
     Route::post('/egresos/store', [EgresoController::class, 'store'])->name('egresos.store');
+    Route::get('egresos/{id}/edit', [EgresoController::class, 'edit'])->name('egresos.edit');
+    Route::put('egresos/{id}', [EgresoController::class, 'update'])->name('egresos.update');
+
 
     // 💵 Ingresos
     Route::get('/ingresos/create', [IngresoController::class, 'create'])->name('ingresos.create');

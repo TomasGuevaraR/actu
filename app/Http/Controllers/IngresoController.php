@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Movimiento;
 use App\Models\LibroContable;
-use App\Models\LibroContableEstado;
 use Carbon\Carbon;
 
 class IngresoController extends Controller
@@ -23,56 +22,64 @@ class IngresoController extends Controller
      */
     public function store(Request $request)
     {
-        // Validación base (consecutivo ya no es obligatorio)
+        // ============================
+        // 1) Buscar libro contable activo
+        // ============================
+        $libro = LibroContable::where('estado', 'activo')->first();
+
+        if (!$libro) {
+            return back()->withErrors([
+                'error' => 'No hay un libro contable activo.'
+            ])->withInput();
+        }
+
+        // ============================
+        // 2) Calcular rango de fechas permitido
+        // ============================
+        $fechaInicio = Carbon::createFromDate($libro->anio_libro, $libro->mes_libro, 1)->startOfMonth();
+        $fechaFin    = (clone $fechaInicio)->endOfMonth();
+
+        // ============================
+        // 3) Validar datos de entrada (incluye rango de fechas)
+        // ============================
         $request->validate([
-            'fecha'       => 'required|date',
+            'fecha'       => [
+                'required',
+                'date',
+                'after_or_equal:' . $fechaInicio->format('Y-m-d'),
+                'before_or_equal:' . $fechaFin->format('Y-m-d'),
+            ],
             'consecutivo' => 'nullable|string|unique:movimientos,consecutivo',
             'detalle'     => 'required|string|max:255',
             'concepto'    => 'required|string|max:255',
             'valor'       => 'required|numeric|min:0',
+        ], [
+            'fecha.after_or_equal'  => 'La fecha debe estar entre ' . $fechaInicio->format('d/m/Y') . 
+                                        ' y ' . $fechaFin->format('d/m/Y') . ' (Libro activo: ' . $libro->nombre . ')',
+            'fecha.before_or_equal' => 'La fecha debe estar entre ' . $fechaInicio->format('d/m/Y') . 
+                                        ' y ' . $fechaFin->format('d/m/Y') . ' (Libro activo: ' . $libro->nombre . ')',
         ]);
 
-        // 1) Buscar el ID del estado "Abierto"
-        $estadoAbiertoId = LibroContableEstado::where('nombre', 'Abierto')->value('id');
-        if (!$estadoAbiertoId) {
-            return back()->withErrors([
-                'error' => 'No está configurado el estado "Abierto" en libro_contable_estados.'
-            ])->withInput();
-        }
-
-        // 2) Obtener libro activo
-        $libroActual = LibroContable::where('estado_id', $estadoAbiertoId)->first();
-        if (!$libroActual) {
-            return back()->withErrors([
-                'error' => 'No hay ningún libro contable abierto.'
-            ])->withInput();
-        }
-
-        // 3) Validar que la fecha sea del mismo mes/año del libro activo
-        $fechaIngresada = Carbon::parse($request->fecha);
-        if ((int)$fechaIngresada->month !== (int)$libroActual->mes_libro ||
-            (int)$fechaIngresada->year  !== (int)$libroActual->anio_libro) {
-
-            return back()->withErrors([
-                'fecha' => 'La fecha debe pertenecer al libro activo: ' . $libroActual->nombre . '.'
-            ])->withInput();
-        }
-
+        // ============================
         // 4) Calcular saldo
-        $saldoAnterior = Movimiento::where('libro_contable_id', $libroActual->id)
+        // ============================
+        $saldoAnterior = Movimiento::where('libro_contable_id', $libro->id)
             ->orderByDesc('id')
             ->value('saldo') ?? 0;
         $saldoActual = $saldoAnterior + (float)$request->valor;
 
+        // ============================
         // 5) Generar consecutivo si viene vacío
+        // ============================
         $consecutivo = $request->consecutivo;
         if (!$consecutivo) {
-            $ultimo = Movimiento::where('libro_contable_id', $libroActual->id)
-                ->max('consecutivo');
+            $ultimo = Movimiento::where('libro_contable_id', $libro->id)->max('consecutivo');
             $consecutivo = $ultimo ? $ultimo + 1 : 1;
         }
 
+        // ============================
         // 6) Guardar movimiento
+        // ============================
         Movimiento::create([
             'fecha'             => $request->fecha,
             'consecutivo'       => $consecutivo,
@@ -81,10 +88,9 @@ class IngresoController extends Controller
             'valor'             => (float)$request->valor,
             'tipo'              => 'ingreso',
             'saldo'             => $saldoActual,
-            'libro_contable_id' => $libroActual->id,
+            'libro_contable_id' => $libro->id,
         ]);
 
-        // Redirigir
         return redirect()->route('libro.index')
             ->with('success', 'Ingreso registrado correctamente.');
     }

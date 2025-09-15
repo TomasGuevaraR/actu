@@ -20,6 +20,7 @@ class Movimiento extends Model
         'presupuesto_id',
         'miembro_id',
         'libro_contable_id', // <-- IMPORTANTE: permitir asignarlo
+        'grupo_id'
     ];
 
     public function presupuesto()
@@ -41,4 +42,9 @@ class Movimiento extends Model
     {
         return $this->belongsTo(LibroContable::class, 'libro_contable_id');
     }
+    public function egresos()
+    {
+        return $this->hasMany(Egreso::class);
+    }
+
 }

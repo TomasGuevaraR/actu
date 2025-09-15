@@ -14,7 +14,7 @@ class PresupuestoController extends Controller
     public function index(Request $request)
     {
         $año = $request->get('año', now()->year); // Año actual por defecto
-        $presupuestos = Presupuesto::with('movimientos')
+        $presupuestos = Presupuesto::with('egresos')
                             ->where('año', $año)
                             ->orderBy('nombre_casilla')
                             ->get();
