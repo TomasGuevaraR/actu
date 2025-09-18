@@ -71,10 +71,16 @@ class IngresoController extends Controller
         // ============================
         // 5) Generar consecutivo si viene vacío
         // ============================
-        $consecutivo = $request->consecutivo;
-        if (!$consecutivo) {
-            $ultimo = Movimiento::where('libro_contable_id', $libro->id)->max('consecutivo');
-            $consecutivo = $ultimo ? $ultimo + 1 : 1;
+        // ============================
+// 5) Manejo del consecutivo
+// ============================
+        $consecutivo = $request->filled('consecutivo') ? $request->consecutivo : null;
+
+        // Validar que no se repita
+        if ($consecutivo && Movimiento::where('consecutivo', $consecutivo)->exists()) {
+            return back()->withErrors([
+                'consecutivo' => 'El consecutivo ya está en uso.'
+            ])->withInput();
         }
 
         // ============================
