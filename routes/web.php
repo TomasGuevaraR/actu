@@ -46,13 +46,13 @@ Route::middleware(['auth', PreventBackHistory::class])->group(function () {
     // Dashboard
     Route::get('/dashboard', fn () => view('dashboard'))->name('dashboard');
 
+    Route::view('/acerca-del-sistema', 'acerca')
+    ->name('acerca');
+
     // 📚 Libro Contable
     
-    Route::get('/libro', [LibroController::class, 'index'])->name('libro.index');
     Route::get('/movimientos/{id}/detalles', [MovimientoController::class, 'detalles']);
-    Route::post('/libro/{id}/cerrar', [LibroContableController::class, 'cerrar'])->name('libro.cerrar');
-    Route::post('/libro/{id}/aprobar', [LibroContableController::class, 'aprobar'])->name('libro.aprobar');
-    Route::post('/libro/{id}/rechazar', [LibroContableController::class, 'rechazar'])->name('libro.rechazar');
+
     Route::get('/libro-contable', [LibroContableController::class, 'index'])->name('libro.index');
 
 
@@ -71,7 +71,7 @@ Route::middleware(['auth', 'checkRol:pastor,fiscal'])->group(function() {
     Route::resource('presupuestos', PresupuestoController::class);
     Route::resource('movimientos', MovimientoController::class);
     Route::get('/movimientos/{id}/detalles-ingreso', [MovimientoController::class, 'detallesIngreso']);
-    Route::resource('ingresos', MovimientoController::class);
+    
 
     // 📊 Estados Financieros
     Route::get('/estados', [EstadoController::class, 'index'])->name('estado.index');

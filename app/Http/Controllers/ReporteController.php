@@ -86,39 +86,61 @@ class ReporteController extends Controller
 
     // DETALLE – Reporte agrupado por nombre y fecha
     public function diezmo(Request $request)
-    {
-        $miembros = Miembro::selectRaw("CONCAT(nombres, ' ', apellidos) AS nombre_completo")
-            ->orderBy('nombres')
-            ->pluck('nombre_completo');
+{
+    $miembros = Miembro::selectRaw("CONCAT(nombres, ' ', apellidos) AS nombre_completo")
+        ->orderBy('nombres')
+        ->pluck('nombre_completo');
 
-        $query = Diezmo::query()
-            ->select([
-                'nombre',
-                DB::raw('SUM(valor) as total'),
-                DB::raw('DATE(fecha) as fecha')
-            ])
-            ->groupBy('nombre', 'fecha')
-            ->orderBy('fecha', 'desc');
+    $query = Diezmo::query()
+        ->select([
+            'nombre',
+            DB::raw('SUM(valor) as total'),
+            DB::raw('DATE(fecha) as fecha')
+        ])
+        ->groupBy('nombre', 'fecha')
+        ->orderBy('fecha', 'desc');
 
-        // Filtros
-        if ($request->filled('nombre')) {
-            $query->where('nombre', 'like', '%' . $request->nombre . '%');
-        }
-        if ($request->filled('fecha')) {
-            $query->whereDate('fecha', $request->fecha);
-        }
-        if ($request->filled('mes')) {
-            $query->whereMonth('fecha', $request->mes);
-        }
-        if ($request->filled('anio')) {
-            $query->whereYear('fecha', $request->anio);
-        }
+    // ✅ Si NO hay filtros → mostrar solo el último mes registrado
+    if (
+        !$request->filled('nombre') &&
+        !$request->filled('fecha') &&
+        !$request->filled('mes') &&
+        !$request->filled('anio')
+    ) {
+        $ultimaFecha = Diezmo::max('fecha');
 
-        $diezmos = $query->get();
-        $total = $diezmos->sum('total');
+        if ($ultimaFecha) {
+            $ultimoMes = Carbon::parse($ultimaFecha)->month;
+            $ultimoAnio = Carbon::parse($ultimaFecha)->year;
 
-        return view('reporte.diezmo', compact('diezmos', 'miembros', 'total'));
+            $query->whereMonth('fecha', $ultimoMes)
+                  ->whereYear('fecha', $ultimoAnio);
+        }
     }
+
+    // 🔎 Filtros normales (si el usuario usa el formulario)
+    if ($request->filled('nombre')) {
+        $query->where('nombre', 'like', '%' . $request->nombre . '%');
+    }
+
+    if ($request->filled('fecha')) {
+        $query->whereDate('fecha', $request->fecha);
+    }
+
+    if ($request->filled('mes')) {
+        $query->whereMonth('fecha', $request->mes);
+    }
+
+    if ($request->filled('anio')) {
+        $query->whereYear('fecha', $request->anio);
+    }
+
+    $diezmos = $query->get();
+    $total = $diezmos->sum('total');
+
+    return view('reporte.diezmo', compact('diezmos', 'miembros', 'total'));
+}
+
     // EXPORTAR – Reporte a Excel
     public function exportarCSV(Request $request)
 {

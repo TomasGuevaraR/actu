@@ -1,402 +1,399 @@
 @extends('layouts.app')
 
 @section('content')
-@php
-    use App\Models\LibroContable;
+    @php
+        use App\Models\LibroContable;
 
-    $rolUsuario   = Auth::user()->rol ?? ''; 
-    $libroActual  = $libroActual ?? LibroContable::where('estado', 'activo')->first();
-    $saldoInicial = optional($libroActual)->saldo_inicial ?? 0;
-@endphp
+        $rolUsuario = Auth::user()->rol ?? '';
+        $libroActual = $libroActual ?? LibroContable::where('estado', 'activo')->first();
+        $saldoInicial = optional($libroActual)->saldo_inicial ?? 0;
+    @endphp
 
-@if ($rolUsuario === 'secretario')
-    <div class="container py-5">
-        <div class="text-center text-red-600 text-lg font-bold">
-            🚫 No tienes permisos para acceder al Libro Contable.
-        </div>
-    </div>
-@else
-<div class="container py-5 text-sm">
-
-    <!-- ================= ENCABEZADO ================= -->
-    <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4 px-4 pt-4">
-
-        <!-- Botón volver -->
-        <div class="flex justify-start">
-            <a href="{{ route('dashboard') }}" 
-                class="inline-flex items-center px-3 py-1.5 bg-[#0166b3] text-white text-xs font-medium rounded hover:bg-[#014c86] transition">
-                <i class="fas fa-arrow-left mr-2"></i> Volver
-            </a>
-        </div>
-
-        <!-- Título y estado -->
-        <div class="flex flex-col md:flex-row md:items-center gap-3 text-center md:text-left">
-            <h1 class="text-xl font-bold text-[#0166b3]">
-                <i class="bi bi-journal-text me-2"></i> Libro Contable
-                @if(isset($libroActual))
-                    <span class="ml-2 text-gray-700 text-base font-medium">
-                        ({{ $libroActual->nombre }})
-                    </span>
-                @endif
-            </h1>
-
-            @if(isset($libroActual))
-                <span class="px-3 py-1 rounded-full text-sm font-semibold
-                    @if($libroActual->estado === 'activo') bg-green-100 text-green-800
-                    @elseif($libroActual->estado === 'cerrado') bg-yellow-100 text-yellow-800
-                    @elseif($libroActual->estado === 'aprobado') bg-blue-100 text-blue-800
-                    @else bg-gray-100 text-gray-800
-                    @endif">
-                    Estado: {{ ucfirst($libroActual->estado) }}
-                </span>
-            @endif
-        </div>
-
-        <!-- Botones de acciones -->
-        <div class="flex flex-wrap gap-2 justify-end">
-            {{-- Solo tesorero puede cerrar libro si está activo --}}
-            @if ($rolUsuario === 'tesorero' && isset($libroActual) && $libroActual->estado === 'activo')
-                <form action="{{ route('libro.cerrar', $libroActual->id) }}" method="POST">
-                    @csrf
-                    <button type="submit" class="px-3 py-1 bg-red-600 text-white rounded">
-                        📕 Cerrar Libro
-                    </button>
-                </form>
-            @endif
-
-            {{-- Solo pastor o fiscal pueden aprobar/rechazar --}}
-            @if (in_array($rolUsuario, ['pastor', 'fiscal']) && isset($libroActual) && $libroActual->estado !== 'aprobado')
-                {{-- Si es pastor y no ha aprobado --}}
-                @if($rolUsuario === 'pastor' && !$libroActual->aprobado_pastor)
-                    <form action="{{ route('libro.aprobar', $libroActual->id) }}" method="POST">
-                        @csrf
-                        <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded">
-                            ✅ Aprobar (Pastor)
-                        </button>
-                    </form>
-                @endif
-
-                {{-- Si es fiscal y no ha aprobado --}}
-                @if($rolUsuario === 'fiscal' && !$libroActual->aprobado_fiscal)
-                    <form action="{{ route('libro.aprobar', $libroActual->id) }}" method="POST">
-                        @csrf
-                        <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded">
-                            ✅ Aprobar (Fiscal)
-                        </button>
-                    </form>
-                @endif
-
-                {{-- Botón rechazar disponible para ambos --}}
-                <form action="{{ route('libro.rechazar', $libroActual->id) }}" method="POST">
-                    @csrf
-                    <button type="submit" class="px-3 py-1 bg-yellow-600 text-white rounded">
-                        ↩️ Rechazar
-                    </button>
-                </form>
-            @endif
-
-            {{-- Solo tesorero puede registrar movimientos si el libro está activo --}}
-            @if ($rolUsuario === 'tesorero' && isset($libroActual) && $libroActual->estado === 'activo')
-                <a href="{{ route('ingresos.create') }}"
-                    class="bg-[#0d6efd] hover:bg-[#014a82] text-white font-bold py-1.5 px-3 rounded-full transition duration-300 shadow-md text-xs">
-                    ➕ Ingreso
-                </a>
-                <a href="{{ route('egresos.create') }}"
-                    class="bg-[#dc3545] hover:bg-[#a71d2a] text-white font-bold py-1.5 px-3 rounded-full transition duration-300 shadow-md text-xs">
-                    ➖ Egreso
-                </a>
-            @endif
-        </div>
-    </div>
-    <!-- =============== FIN ENCABEZADO =============== -->
-
-    <!-- ================= ESTADO DE APROBACIONES ================= -->
-    @if(isset($libroActual) && in_array($libroActual->estado, ['cerrado','aprobado']))
-    <div class="bg-gray-50 border rounded-lg shadow-sm p-4 mb-4 text-sm">
-        <p><strong>Aprobado por Pastor:</strong> 
-            {{ $libroActual->aprobado_pastor ? '✅ Sí' : '❌ No' }}
-        </p>
-        <p><strong>Aprobado por Fiscal:</strong> 
-            {{ $libroActual->aprobado_fiscal ? '✅ Sí' : '❌ No' }}
-        </p>
-        <p><strong>Estado final del libro:</strong> {{ ucfirst($libroActual->estado) }}</p>
-    </div>
-@endif
-
-
-        </div>
-    </div>
-    <!-- =============== FIN ENCABEZADO =============== -->
-
-
-    <!-- ================= TABLA DE MOVIMIENTOS ================= -->
-    @if(isset($libroActual))
-        <div class="card-body px-3 py-3">
-            <div class="overflow-x-auto">
-                <table class="min-w-full border border-gray-200 rounded shadow-sm text-xs">
-                    <thead class="bg-[#0166b3] text-white text-xs">
-                        <tr>
-                            <th class="py-2 px-3 border">Fecha</th>
-                            <th class="py-2 px-3 border">Consecutivo</th>
-                            <th class="py-2 px-3 border">Detalle</th>
-                            <th class="py-2 px-3 border">Concepto</th>
-                            <th class="py-2 px-3 border">Casillas</th>
-                            <th class="py-2 px-3 border">Valor</th>
-                            <th class="py-2 px-3 border">Entrada</th>
-                            <th class="py-2 px-3 border">Salida</th>
-                            <th class="py-2 px-3 border">Saldo</th>
-                            <th class="py-2 px-3 border">Ver</th>
-                            @if ($rolUsuario === 'tesorero')
-                                <th class="py-2 px-3 border">Acciones</th>
-                            @endif
-                        </tr>
-                    </thead>
-                    <tbody class="text-xs text-gray-700">
-                        @php
-                            $totalEntradas = 0;
-                            $totalSalidas = 0;
-                            $ultimoSaldo = $saldoInicial;
-                        @endphp
-
-                        @forelse ($movimientos as $mov)
-                            @php
-                                $entrada = $mov->tipo === 'ingreso' ? (float) $mov->valor : 0;
-                                $salida  = $mov->tipo === 'egreso' ? (float) $mov->valor : 0;
-                                $ultimoSaldo += $entrada - $salida;
-                                $totalEntradas += $entrada;
-                                $totalSalidas  += $salida;
-                            @endphp
-                            <tr class="hover:bg-gray-100">
-                                <td class="py-2 px-3 border">{{ $mov->fecha }}</td>
-                                <td class="py-2 px-3 border">{{ $mov->consecutivo ?? '-' }}</td>
-                                <td class="py-2 px-3 border">{{ $mov->detalle }}</td>
-                                <td class="py-2 px-3 border">{{ $mov->concepto }}</td>
-                                <td class="py-2 px-3 border">{{ $mov->casilla ?? '-' }}</td>
-                                <td class="py-2 px-3 border">{{ number_format($mov->valor ?? 0, 0, ',', '.') }}</td>
-                                <td class="py-2 px-3 border text-green-600 font-semibold">
-                                    {{ $entrada > 0 ? number_format($entrada, 0, ',', '.') : '-' }}
-                                </td>
-                                <td class="py-2 px-3 border text-red-600 font-semibold">
-                                    {{ $salida > 0 ? number_format($salida, 0, ',', '.') : '-' }}
-                                </td>
-                                <td class="py-2 px-3 border font-semibold">
-                                    {{ number_format($ultimoSaldo, 0, ',', '.') }}
-                                </td>
-                                <td class="py-2 px-3 border text-center">
-                                    <button class="text-indigo-600 hover:text-indigo-800 text-sm" 
-                                            onclick="mostrarDetalles({{ $mov->id }})"
-                                            title="Ver detalles">
-                                        🔍
-                                    </button>
-                                </td>
-                                @if ($rolUsuario === 'tesorero' && isset($libroActual) && $libroActual->estado === 'activo')
-                                <td class="py-2 px-3 border text-center">
-                                {{-- Editar --}}
-                                @if ($mov->tipo === 'ingreso')
-                                    <a href="{{ route('movimientos.edit', $mov->id) }}" 
-                                    class="text-blue-600 hover:text-blue-800 mx-1 text-sm" 
-                                    title="Editar">✏️</a>
-                                @elseif ($mov->tipo === 'egreso')
-                                    @php
-                                        $egreso = \App\Models\Egreso::where('movimiento_id', $mov->id)->first();
-                                    @endphp
-                                    @if ($egreso)
-                                        <a href="{{ route('egresos.edit', $egreso->id) }}" 
-                                        class="text-blue-600 hover:text-blue-800 mx-1 text-sm" 
-                                        title="Editar">✏️</a>
-                                    @endif
-                                @endif
-
-                                {{-- Eliminar (funciona igual para ambos casos) --}}
-                                <button type="button" 
-                                        class="text-red-600 hover:text-red-800 mx-1 text-sm" 
-                                        title="Eliminar"
-                                        onclick="abrirModalEliminar('{{ route('movimientos.destroy', $mov->id) }}')">🗑️</button>
-                            </td>
-
-                            @endif
-
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="{{ $rolUsuario === 'tesorero' ? 11 : 10 }}" class="text-center py-4 text-gray-500">No hay movimientos registrados.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                    <tfoot class="bg-gray-100 text-xs font-semibold">
-                        <tr>
-                            <td colspan="6" class="py-2 px-3 text-right">Totales:</td>
-                            <td class="py-2 px-3 text-green-700">{{ number_format($totalEntradas, 0, ',', '.') }}</td>
-                            <td class="py-2 px-3 text-red-700">{{ number_format($totalSalidas, 0, ',', '.') }}</td>
-                            <td class="py-2 px-3 text-black">{{ number_format($ultimoSaldo, 0, ',', '.') }}</td>
-                            <td colspan="{{ $rolUsuario === 'tesorero' ? 2 : 1 }}"></td>
-                        </tr>
-                    </tfoot>
-                </table>
+    @if ($rolUsuario === 'secretario')
+        <div class="container py-5">
+            <div class="text-center text-red-600 text-lg font-bold">
+                🚫 No tienes permisos para acceder al Libro Contable.
             </div>
         </div>
     @else
-        <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-            No se encontró ningún libro contable activo.
+        <div class="container py-5 text-sm">
+
+            <!-- ================= ENCABEZADO ================= -->
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4 px-4 pt-4">
+
+                <!-- Botón volver -->
+                <div class="flex justify-start">
+                    <a href="{{ route('dashboard') }}"
+                        class="inline-flex items-center px-3 py-1.5 bg-[#0166b3] text-white text-xs font-medium rounded hover:bg-[#014c86] transition">
+                        <i class="fas fa-arrow-left mr-2"></i> Volver
+                    </a>
+                </div>
+
+                <!-- Título y estado -->
+                <div class="flex flex-col md:flex-row md:items-center gap-3 text-center md:text-left">
+                    <h1 class="text-xl font-bold text-[#0166b3]">
+                        <i class="bi bi-journal-text me-2"></i> Libro Contable
+                        @if(isset($libroActual))
+                            <span class="ml-2 text-gray-700 text-base font-medium">
+                                ({{ $libroActual->nombre }})
+                            </span>
+                        @endif
+                    </h1>
+
+                    @if(isset($libroActual))
+                        <span class="px-3 py-1 rounded-full text-sm font-semibold
+                                                        @if($libroActual->estado === 'activo') bg-green-100 text-green-800
+                                                        @elseif($libroActual->estado === 'cerrado') bg-yellow-100 text-yellow-800
+                                                        @elseif($libroActual->estado === 'aprobado') bg-blue-100 text-blue-800
+                                                        @else bg-gray-100 text-gray-800
+                                                        @endif">
+                            Estado: {{ ucfirst($libroActual->estado) }}
+                        </span>
+                    @endif
+                </div>
+
+                <!-- Botones de acciones -->
+                <div class="flex flex-wrap gap-2 justify-end">
+                    {{-- Solo tesorero puede cerrar libro si está activo --}}
+                    @if ($rolUsuario === 'tesorero' && isset($libroActual) && $libroActual->estado === 'activo')
+                        <form action="{{ route('libro.cerrar', $libroActual->id) }}" method="POST">
+                            @csrf
+                            <button type="submit" class="px-3 py-1 bg-red-600 text-white rounded">
+                                📕 Cerrar Libro
+                            </button>
+                        </form>
+                    @endif
+
+                    {{-- Solo pastor o fiscal pueden aprobar/rechazar cuando el libro está CERRADO --}}
+                    @if (
+                            in_array($rolUsuario, ['pastor', 'fiscal'])
+                            && isset($libroActual)
+                            && $libroActual->estado === 'cerrado'
+                        )
+
+                        {{-- Si es pastor y no ha aprobado --}}
+                        @if($rolUsuario === 'pastor' && !$libroActual->aprobado_pastor)
+                            <form action="{{ route('libro.aprobar', $libroActual->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded">
+                                    ✅ Aprobar (Pastor)
+                                </button>
+                            </form>
+                        @endif
+
+                        {{-- Si es fiscal y no ha aprobado --}}
+                        @if($rolUsuario === 'fiscal' && !$libroActual->aprobado_fiscal)
+                            <form action="{{ route('libro.aprobar', $libroActual->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded">
+                                    ✅ Aprobar (Fiscal)
+                                </button>
+                            </form>
+                        @endif
+
+                        {{-- Rechazar --}}
+                        <form action="{{ route('libro.rechazar', $libroActual->id) }}" method="POST">
+                            @csrf
+                            <button type="submit" class="px-3 py-1 bg-yellow-600 text-white rounded">
+                                ↩️ Rechazar
+                            </button>
+                        </form>
+
+                    @endif
+
+                    {{-- Solo tesorero puede registrar movimientos si el libro está activo --}}
+                    @if ($rolUsuario === 'tesorero' && isset($libroActual) && $libroActual->estado === 'activo')
+                        <a href="{{ route('ingresos.create') }}"
+                            class="bg-[#0d6efd] hover:bg-[#014a82] text-white font-bold py-1.5 px-3 rounded-full transition duration-300 shadow-md text-xs">
+                            ➕ Ingreso
+                        </a>
+                        <a href="{{ route('egresos.create') }}"
+                            class="bg-[#dc3545] hover:bg-[#a71d2a] text-white font-bold py-1.5 px-3 rounded-full transition duration-300 shadow-md text-xs">
+                            ➖ Egreso
+                        </a>
+                    @endif
+                </div>
+            </div>
+            <!-- =============== FIN ENCABEZADO =============== -->
+
+            <!-- ================= ESTADO DE APROBACIONES ================= -->
+            @if(isset($libroActual) && in_array($libroActual->estado, ['cerrado', 'aprobado']))
+                <div class="bg-gray-50 border rounded-lg shadow-sm p-4 mb-4 text-sm">
+                    <p><strong>Aprobado por Pastor:</strong>
+                        {{ $libroActual->aprobado_pastor ? '✅ Sí' : '❌ No' }}
+                    </p>
+                    <p><strong>Aprobado por Fiscal:</strong>
+                        {{ $libroActual->aprobado_fiscal ? '✅ Sí' : '❌ No' }}
+                    </p>
+                    <p><strong>Estado final del libro:</strong> {{ ucfirst($libroActual->estado) }}</p>
+                </div>
+            @endif
+
+
+        </div>
+        </div>
+        <!-- =============== FIN ENCABEZADO =============== -->
+
+
+        <!-- ================= TABLA DE MOVIMIENTOS ================= -->
+        @if(isset($libroActual))
+            <div class="card-body px-3 py-3">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full border border-gray-200 rounded shadow-sm text-xs">
+                        <thead class="bg-[#0166b3] text-white text-xs">
+                            <tr>
+                                <th class="py-2 px-3 border">Fecha</th>
+                                <th class="py-2 px-3 border">Consecutivo</th>
+                                <th class="py-2 px-3 border">Detalle</th>
+                                <th class="py-2 px-3 border">Concepto</th>
+                                <th class="py-2 px-3 border">Casillas</th>
+                                <th class="py-2 px-3 border">Valor</th>
+                                <th class="py-2 px-3 border">Entrada</th>
+                                <th class="py-2 px-3 border">Salida</th>
+                                <th class="py-2 px-3 border">Saldo</th>
+                                <th class="py-2 px-3 border">Ver</th>
+                                @if ($rolUsuario === 'tesorero')
+                                    <th class="py-2 px-3 border">Acciones</th>
+                                @endif
+                            </tr>
+                        </thead>
+                        <tbody class="text-xs text-gray-700">
+                            @php
+                                $totalEntradas = 0;
+                                $totalSalidas = 0;
+                                $ultimoSaldo = $saldoInicial;
+                            @endphp
+
+                            @forelse ($movimientos as $mov)
+                                @php
+                                    $entrada = $mov->tipo === 'ingreso' ? (float) $mov->valor : 0;
+                                    $salida = $mov->tipo === 'egreso' ? (float) $mov->valor : 0;
+                                    $ultimoSaldo += $entrada - $salida;
+                                    $totalEntradas += $entrada;
+                                    $totalSalidas += $salida;
+                                @endphp
+                                <tr class="hover:bg-gray-100">
+                                    <td class="py-2 px-3 border">{{ $mov->fecha }}</td>
+                                    <td class="py-2 px-3 border">{{ $mov->consecutivo ?? '-' }}</td>
+                                    <td class="py-2 px-3 border">{{ $mov->detalle }}</td>
+                                    <td class="py-2 px-3 border">{{ $mov->concepto }}</td>
+                                    <td class="py-2 px-3 border">{{ $mov->casilla ?? '-' }}</td>
+                                    <td class="py-2 px-3 border">{{ number_format($mov->valor ?? 0, 0, ',', '.') }}</td>
+                                    <td class="py-2 px-3 border text-green-600 font-semibold">
+                                        {{ $entrada > 0 ? number_format($entrada, 0, ',', '.') : '-' }}
+                                    </td>
+                                    <td class="py-2 px-3 border text-red-600 font-semibold">
+                                        {{ $salida > 0 ? number_format($salida, 0, ',', '.') : '-' }}
+                                    </td>
+                                    <td class="py-2 px-3 border font-semibold">
+                                        {{ number_format($ultimoSaldo, 0, ',', '.') }}
+                                    </td>
+                                    <td class="py-2 px-3 border text-center">
+                                        <button class="text-indigo-600 hover:text-indigo-800 text-sm"
+                                            onclick="mostrarDetalles({{ $mov->id }})" title="Ver detalles">
+                                            🔍
+                                        </button>
+                                    </td>
+                                    @if ($rolUsuario === 'tesorero' && isset($libroActual) && $libroActual->estado === 'activo')
+                                        <td class="py-2 px-3 border text-center">
+                                            {{-- Editar --}}
+                                            @if ($mov->tipo === 'ingreso')
+                                                <a href="{{ route('movimientos.edit', $mov->id) }}"
+                                                    class="text-blue-600 hover:text-blue-800 mx-1 text-sm" title="Editar">✏️</a>
+                                            @elseif ($mov->tipo === 'egreso')
+                                                @php
+                                                    $egreso = \App\Models\Egreso::where('movimiento_id', $mov->id)->first();
+                                                @endphp
+                                                @if ($egreso)
+                                                    <a href="{{ route('egresos.edit', $egreso->id) }}"
+                                                        class="text-blue-600 hover:text-blue-800 mx-1 text-sm" title="Editar">✏️</a>
+                                                @endif
+                                            @endif
+
+                                            {{-- Eliminar (funciona igual para ambos casos) --}}
+                                            <button type="button" class="text-red-600 hover:text-red-800 mx-1 text-sm" title="Eliminar"
+                                                onclick="abrirModalEliminar('{{ route('movimientos.destroy', $mov->id) }}')">🗑️</button>
+                                        </td>
+
+                                    @endif
+
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="{{ $rolUsuario === 'tesorero' ? 11 : 10 }}" class="text-center py-4 text-gray-500">No
+                                        hay movimientos registrados.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                        <tfoot class="bg-gray-100 text-xs font-semibold">
+                            <tr>
+                                <td colspan="6" class="py-2 px-3 text-right">Totales:</td>
+                                <td class="py-2 px-3 text-green-700">{{ number_format($totalEntradas, 0, ',', '.') }}</td>
+                                <td class="py-2 px-3 text-red-700">{{ number_format($totalSalidas, 0, ',', '.') }}</td>
+                                <td class="py-2 px-3 text-black">{{ number_format($ultimoSaldo, 0, ',', '.') }}</td>
+                                <td colspan="{{ $rolUsuario === 'tesorero' ? 2 : 1 }}"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        @else
+            <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+                No se encontró ningún libro contable activo.
+            </div>
+        @endif
         </div>
     @endif
-</div>
-@endif
-<!-- ================= MODAL INGRESO ================= -->
-<div id="modalIngreso" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-lg p-6 w-[650px] max-h-[85vh] overflow-y-auto text-sm">
-        <h2 class="text-lg font-bold text-green-600 mb-4">💰 Detalles de Ingreso</h2>
-        <div id="listaIngreso" class="grid grid-cols-3 gap-3"></div>
-        <div id="totalIngreso" class="mt-4 text-right font-bold text-green-600"></div>
-        <div class="mt-4 flex justify-end">
-            <button onclick="cerrarModal('modalIngreso')" 
-                class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                Cerrar
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- ================= MODAL EGRESO ================= -->
-<div id="modalEgreso" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-lg p-6 w-[650px] max-h-[85vh] overflow-y-auto text-sm">
-        <h2 class="text-lg font-bold text-red-600 mb-4">📤 Detalles de Egreso</h2>
-        <div id="listaEgreso" class="grid grid-cols-3 gap-3"></div>
-        <div id="totalEgreso" class="mt-4 text-right font-bold text-red-600"></div>
-        <div class="mt-4 flex justify-end">
-            <button onclick="cerrarModal('modalEgreso')" 
-                class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-                Cerrar
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- ================= MODAL ELIMINAR ================= -->
-<div id="modalEliminar" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-lg p-6 w-96 text-center">
-        <h2 class="text-xl font-bold text-red-600 mb-4">⚠️ Confirmar eliminación</h2>
-        <p class="mb-6">¿Seguro que deseas eliminar este registro?</p>
-        <form id="formEliminar" method="POST" action="">
-            @csrf
-            @method('DELETE')
-            <div class="flex justify-center gap-4">
-                <button type="button" onclick="cerrarModalEliminar()" 
-                    class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">
-                    Cancelar
-                </button>
-                <button type="submit" 
-                    class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-                    Eliminar
+    <!-- ================= MODAL INGRESO ================= -->
+    <div id="modalIngreso" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-[650px] max-h-[85vh] overflow-y-auto text-sm">
+            <h2 class="text-lg font-bold text-green-600 mb-4">💰 Detalles de Ingreso</h2>
+            <div id="listaIngreso" class="grid grid-cols-3 gap-3"></div>
+            <div id="totalIngreso" class="mt-4 text-right font-bold text-green-600"></div>
+            <div class="mt-4 flex justify-end">
+                <button onclick="cerrarModal('modalIngreso')"
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                    Cerrar
                 </button>
             </div>
-        </form>
-    </div>
-</div>
-
-<!-- ================= MODAL DE ÉXITO (Flash message) ================= -->
-@if(session('success'))
-<div id="flashModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 transition-opacity duration-500">
-    <div class="bg-white rounded-lg shadow-lg p-6 max-w-sm text-center border border-blue-400">
-        <div class="flex flex-col items-center">
-            <svg class="w-12 h-12 text-blue-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M5 13l4 4L19 7" />
-            </svg>
-            <h2 class="text-xl font-semibold text-blue-600 mb-2">¡Éxito!</h2>
-            <p class="text-gray-700">{{ session('success') }}</p>
         </div>
     </div>
-</div>
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const flashModal = document.getElementById("flashModal");
-
-        if (flashModal) {
-            setTimeout(() => {
-                flashModal.style.opacity = "0"; // animación salida
-                setTimeout(() => flashModal.remove(), 500); // se elimina del DOM
-            }, 4000); // ⏳ 4 segundos visible
-        }
-    });
-</script>
-@endif
-
-
-<script>
-    // ================= MOSTRAR DETALLES =================
-    async function mostrarDetalles(id) {
-        try {
-            const response = await fetch(`/movimientos/${id}/detalles`);
-            const data = await response.json();
-
-            const tipo = data.tipo; 
-            const detalles = data.detalles;
-
-            if (tipo === 'ingreso') {
-                llenarModal(detalles, 'listaIngreso', 'totalIngreso');
-                document.getElementById('modalIngreso').classList.remove('hidden');
-            } else if (tipo === 'egreso') {
-                llenarModal(detalles, 'listaEgreso', 'totalEgreso');
-                document.getElementById('modalEgreso').classList.remove('hidden');
-            }
-        } catch (error) {
-            console.error("Error cargando detalles:", error);
-            alert("No se pudieron cargar los detalles del movimiento.");
-        }
-    }
-
-    // ================= LLENAR MODAL =================
-    function llenarModal(detalles, listaId, totalId) {
-        const lista = document.getElementById(listaId);
-        const totalDiv = document.getElementById(totalId);
-        lista.innerHTML = "";
-        totalDiv.textContent = "";
-
-        let total = 0;
-
-        if (detalles && detalles.length > 0) {
-            detalles.forEach((item) => {
-                const div = document.createElement("div");
-                div.className = "p-2 border rounded bg-gray-50 text-xs";
-                const label = item.nombre ? item.nombre : (item.casilla ?? 'N/A');
-                div.textContent = `${label} → $${new Intl.NumberFormat("es-CO").format(item.valor)}`;
-                lista.appendChild(div);
-                total += item.valor;
-            });
-            totalDiv.textContent = `Total: $${new Intl.NumberFormat("es-CO").format(total)}`;
-        } else {
-            const div = document.createElement("div");
-            div.textContent = "No hay registros asociados.";
-            lista.appendChild(div);
-        }
-    }
-
-    // ================= CERRAR MODALES =================
-    function cerrarModal(modalId) {
-        document.getElementById(modalId).classList.add('hidden');
-    }
-
-    // ================= ELIMINAR MODAL =================
-    function abrirModalEliminar(url) {
-        document.getElementById('formEliminar').action = url;
-        document.getElementById('modalEliminar').classList.remove('hidden');
-    }
-
-    function cerrarModalEliminar() {
-        document.getElementById('modalEliminar').classList.add('hidden');
-    }
-</script>
-@if(session('success'))
-    <div 
-        x-data="{ show: true }" 
-        x-show="show"
-        x-init="setTimeout(() => show = false, 4000)" 
-        class="fixed top-5 right-5 bg-green-500 text-white px-4 py-2 rounded shadow-lg transition-opacity duration-500"
-    >
-        {{ session('success') }}
+    <!-- ================= MODAL EGRESO ================= -->
+    <div id="modalEgreso" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-[650px] max-h-[85vh] overflow-y-auto text-sm">
+            <h2 class="text-lg font-bold text-red-600 mb-4">📤 Detalles de Egreso</h2>
+            <div id="listaEgreso" class="grid grid-cols-3 gap-3"></div>
+            <div id="totalEgreso" class="mt-4 text-right font-bold text-red-600"></div>
+            <div class="mt-4 flex justify-end">
+                <button onclick="cerrarModal('modalEgreso')"
+                    class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                    Cerrar
+                </button>
+            </div>
+        </div>
     </div>
-@endif
+
+    <!-- ================= MODAL ELIMINAR ================= -->
+    <div id="modalEliminar" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-96 text-center">
+            <h2 class="text-xl font-bold text-red-600 mb-4">⚠️ Confirmar eliminación</h2>
+            <p class="mb-6">¿Seguro que deseas eliminar este registro?</p>
+            <form id="formEliminar" method="POST" action="">
+                @csrf
+                @method('DELETE')
+                <div class="flex justify-center gap-4">
+                    <button type="button" onclick="cerrarModalEliminar()"
+                        class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                        Eliminar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL DE ÉXITO (Flash message) ================= -->
+    @if(session('success'))
+        <div id="flashModal"
+            class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 transition-opacity duration-500">
+            <div class="bg-white rounded-lg shadow-lg p-6 max-w-sm text-center border border-blue-400">
+                <div class="flex flex-col items-center">
+                    <svg class="w-12 h-12 text-blue-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <h2 class="text-xl font-semibold text-blue-600 mb-2">¡Éxito!</h2>
+                    <p class="text-gray-700">{{ session('success') }}</p>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const flashModal = document.getElementById("flashModal");
+
+                if (flashModal) {
+                    setTimeout(() => {
+                        flashModal.style.opacity = "0"; // animación salida
+                        setTimeout(() => flashModal.remove(), 500); // se elimina del DOM
+                    }, 4000); // ⏳ 4 segundos visible
+                }
+            });
+        </script>
+    @endif
+
+
+    <script>
+        // ================= MOSTRAR DETALLES =================
+        async function mostrarDetalles(id) {
+            try {
+                const response = await fetch(`/movimientos/${id}/detalles`);
+                const data = await response.json();
+
+                const tipo = data.tipo;
+                const detalles = data.detalles;
+
+                if (tipo === 'ingreso') {
+                    llenarModal(detalles, 'listaIngreso', 'totalIngreso');
+                    document.getElementById('modalIngreso').classList.remove('hidden');
+                } else if (tipo === 'egreso') {
+                    llenarModal(detalles, 'listaEgreso', 'totalEgreso');
+                    document.getElementById('modalEgreso').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error("Error cargando detalles:", error);
+                alert("No se pudieron cargar los detalles del movimiento.");
+            }
+        }
+
+        // ================= LLENAR MODAL =================
+        function llenarModal(detalles, listaId, totalId) {
+            const lista = document.getElementById(listaId);
+            const totalDiv = document.getElementById(totalId);
+            lista.innerHTML = "";
+            totalDiv.textContent = "";
+
+            let total = 0;
+
+            if (detalles && detalles.length > 0) {
+                detalles.forEach((item) => {
+                    const div = document.createElement("div");
+                    div.className = "p-2 border rounded bg-gray-50 text-xs";
+                    const label = item.nombre ? item.nombre : (item.casilla ?? 'N/A');
+                    div.textContent = `${label} → $${new Intl.NumberFormat("es-CO").format(item.valor)}`;
+                    lista.appendChild(div);
+                    total += item.valor;
+                });
+                totalDiv.textContent = `Total: $${new Intl.NumberFormat("es-CO").format(total)}`;
+            } else {
+                const div = document.createElement("div");
+                div.textContent = "No hay registros asociados.";
+                lista.appendChild(div);
+            }
+        }
+
+        // ================= CERRAR MODALES =================
+        function cerrarModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // ================= ELIMINAR MODAL =================
+        function abrirModalEliminar(url) {
+            document.getElementById('formEliminar').action = url;
+            document.getElementById('modalEliminar').classList.remove('hidden');
+        }
+
+        function cerrarModalEliminar() {
+            document.getElementById('modalEliminar').classList.add('hidden');
+        }
+    </script>
+    @if(session('success'))
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
+            class="fixed top-5 right-5 bg-green-500 text-white px-4 py-2 rounded shadow-lg transition-opacity duration-500">
+            {{ session('success') }}
+        </div>
+    @endif
 
 @endsection

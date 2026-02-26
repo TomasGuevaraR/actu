@@ -1,6 +1,7 @@
 <!-- resources/views/layouts/app.blade.php -->
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -38,9 +39,11 @@
 <body class="@yield('body-class') bg-gray-100 flex min-h-screen">
 
     <!-- Menú lateral (20%) -->
-    <aside id="sidebar" class="fixed top-0 left-0 h-full transition-all duration-300 w-[20%] bg-[#0166b3] text-white flex flex-col items-center py-4 z-50">
+    <aside id="sidebar"
+        class="fixed top-0 left-0 h-full transition-all duration-300 w-[20%] bg-[#0166b3] text-white flex flex-col items-center py-4 z-50">
         <div class="flex flex-col items-center mb-4">
-            <img src="https://img.icons8.com/color/80/user-male-circle--v1.png" alt="Usuario" class="w-16 h-16 rounded-full shadow-lg">
+            <i class="fas fa-user-circle text-white text-6xl shadow-lg"></i>
+
             <p class="mt-2 text-sm font-semibold user-info">{{ Auth::user()->nombre ?? 'Invitado' }}</p>
             <p class="text-xs text-blue-200 user-info">{{ Auth::user()->rol ?? 'Sin rol' }}</p>
 
@@ -54,42 +57,52 @@
 
         <!-- Menú navegación -->
         <nav class="flex flex-col items-start justify-start flex-grow space-y-2.7 mt-4 w-full px-4">
-            <a href="{{ route('dashboard') }}" class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
+            <a href="{{ route('dashboard') }}"
+                class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
                 <i class="fas fa-home text-yellow-400"></i>
                 <span class="menu-label">Inicio</span>
             </a>
-            <a href="{{ route('libro.index') }}" class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
+            <a href="{{ route('libro.index') }}"
+                class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
                 <i class="fas fa-book-open text-green-400"></i>
                 <span class="menu-label">Libro Contable</span>
             </a>
-            <a href="{{ route('presupuestos.index') }}" class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
+            <a href="{{ route('presupuestos.index') }}"
+                class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
                 <i class="fas fa-coins text-yellow-300"></i>
                 <span class="menu-label">Presupuestos</span>
             </a>
-            <a href="{{ route('estado.index') }}" class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
-            <i class="fas fa-file-invoice  text-pink-200 text-[#0166b3]"></i>
-            <span class="menu-label ">Estado Financiero</span>
+            <a href="{{ route('estado.index') }}"
+                class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
+                <i class="fas fa-file-invoice  text-pink-200 text-[#0166b3]"></i>
+                <span class="menu-label ">Estado Financiero</span>
             </a>
-                
-            <a href="{{ route('miembros.index') }}" class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
+
+            <a href="{{ route('miembros.index') }}"
+                class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
                 <i class="fas fa-users text-purple-400"></i>
                 <span class="menu-label">Miembros</span>
             </a>
 
-            <a href="{{ route('diezmo.index') }}" class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
-                <i class="fas fa-users text-purple-400"></i>
+            <a href="{{ route('diezmo.index') }}"
+                class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
+                <i class="fas fa-hand-holding-heart text-green-500"></i>
                 <span class="menu-label">Diezmos/Ofrendas</span>
             </a>
 
-            <a href="{{ route('usuarios.index') }}" class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
+
+            <a href="{{ route('usuarios.index') }}"
+                class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
                 <i class="fas fa-user-gear text-pink-400"></i>
                 <span class="menu-label">Usuarios</span>
             </a>
-            <a href="{{ route('reporte.index') }}" class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
+            <a href="{{ route('reporte.index') }}"
+                class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
                 <i class="fas fa-chart-bar text-cyan-400"></i>
                 <span class="menu-label">Reportes</span>
             </a>
-            <a href="{{ route('mi-perfil.index') }}" class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
+            <a href="{{ route('mi-perfil.index') }}"
+                class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
                 <i class="fas fa-user-circle text-blue-300"></i>
                 <span class="menu-label">Mi Perfil</span>
             </a>
@@ -97,14 +110,17 @@
 
         <form method="POST" action="{{ route('logout') }}" class="w-full px-4 mt-4">
             @csrf
-            <button type="submit" class="flex items-center space-x-2 w-full px-2 py-2 rounded bg-red-500 hover:bg-red-600 text-white transition">
+            <button type="submit"
+                class="flex items-center space-x-2 w-full px-2 py-2 rounded bg-red-500 hover:bg-red-600 text-white transition">
                 <i class="fas fa-sign-out-alt"></i>
                 <span class="menu-label">Cerrar sesión</span>
             </button>
         </form>
 
         <div class="text-center text-xs text-blue-100 px-2 mt-8 mb-2 copyright">
-            &copy; 2025 Sistema ACTU. Todos los derechos reservados.
+            <a href="{{ route('acerca') }}" target="_blank" class="hover:underline">
+                &copy; {{ date('Y') }} Sistema ACTU. Todos los derechos reservados.
+            </a>
         </div>
     </aside>
 
@@ -116,7 +132,7 @@
 
     <!-- Scripts -->
     <script>
-        window.onpageshow = function(event) {
+        window.onpageshow = function (event) {
             if (event.persisted) {
                 window.location.reload();
             }
@@ -131,13 +147,13 @@
                 },
                 credentials: 'same-origin'
             })
-            .then(response => response.json())
-            .then(data => {
-                if (!data.authenticated) {
-                    window.location.href = '/login';
-                }
-            })
-            .catch(error => console.error('Error verificando autenticación:', error));
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.authenticated) {
+                        window.location.href = '/login';
+                    }
+                })
+                .catch(error => console.error('Error verificando autenticación:', error));
         }
 
         if (document.body.classList.contains('authenticated-page')) {
@@ -145,4 +161,5 @@
         }
     </script>
 </body>
+
 </html>

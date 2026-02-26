@@ -12,9 +12,6 @@ use App\Models\Egreso;
 class MovimientoController extends Controller
 {
     
-    
-
-
     public function edit($id)
     {
         $movimiento = Movimiento::findOrFail($id);

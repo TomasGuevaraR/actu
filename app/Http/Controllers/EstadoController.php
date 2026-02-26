@@ -6,51 +6,57 @@ use App\Models\Egreso;
 use Illuminate\Http\Request;
 use App\Models\Estado;
 use App\Models\Movimiento;
+use App\Models\LibroContable;
+
 
 class EstadoController extends Controller
 {
     // Mostrar estado financiero por año
-    public function index(Request $request)
-    {
-        $anio = $request->input('anio', now()->year);
-        $registroSaldoInicial = Estado::where('anio', $anio)->where('mes', 1)->first();
+   public function index(Request $request)
+{
+    $anio = $request->input('anio', now()->year);
 
-        $saldoAnterior = $registroSaldoInicial->saldo_inicial ?? $this->obtenerSaldoFinalAnterior($anio);
-        $saldos = [];
+    // 🔹 Buscar saldo inicial de ENERO en libro_contables
+    $registroLibro = LibroContable::where('anio_libro', $anio)
+        ->where('mes_libro', 1)
+        ->first();
 
-        for ($mes = 1; $mes <= 12; $mes++) {
-            // Entradas desde movimientos
-            $entradas = Movimiento::whereYear('fecha', $anio)
-                ->whereMonth('fecha', $mes)
-                ->where('tipo', 'ingreso')
-                ->sum('valor');
+    // Si existe enero en libro_contables usar ese saldo
+    $saldoAnterior = $registroLibro->saldo_inicial 
+        ?? $this->obtenerSaldoFinalAnterior($anio);
 
-            // Salidas desde movimientos
-            $salidas = Egreso::whereYear('fecha', $anio)
-                ->whereMonth('fecha', $mes)
-                ->sum('valor');
+    $saldos = [];
 
-            // Si es enero y hay saldo inicial registrado manual, usarlo
-            if ($mes === 1 && $registroSaldoInicial) {
-                $saldoInicial = $registroSaldoInicial->saldo_inicial;
-            } else {
-                $saldoInicial = $saldoAnterior;
-            }
+    for ($mes = 1; $mes <= 12; $mes++) {
 
-            $saldoFinal = $saldoInicial + $entradas - $salidas;
+        $entradas = Movimiento::whereYear('fecha', $anio)
+            ->whereMonth('fecha', $mes)
+            ->where('tipo', 'ingreso')
+            ->sum('valor');
 
-            $saldos[] = [
-                'inicial' => $saldoInicial,
-                'entradas' => $entradas,
-                'salidas' => $salidas,
-                'final' => $saldoFinal,
-            ];
+        $salidas = Movimiento::whereYear('fecha', $anio)
+            ->whereMonth('fecha', $mes)
+            ->where('tipo', 'egreso')
+            ->sum('valor');
 
-            $saldoAnterior = $saldoFinal;
-        }
+        $saldoInicial = $saldoAnterior;
 
-        return view('estado.index', compact('saldos', 'anio'));
+        $saldoFinal = $saldoInicial + $entradas - $salidas;
+
+        $saldos[] = [
+            'inicial' => $saldoInicial,
+            'entradas' => $entradas,
+            'salidas' => $salidas,
+            'final' => $saldoFinal,
+        ];
+
+        $saldoAnterior = $saldoFinal;
     }
+
+    return view('estado.index', compact('saldos', 'anio'));
+}
+
+
 
     // Obtener el saldo final del último mes del año anterior
     private function obtenerSaldoFinalAnterior($anio)
