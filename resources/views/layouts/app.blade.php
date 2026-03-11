@@ -5,6 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'ACTU')</title>
     @vite('resources/css/app.css')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -20,23 +21,43 @@
     <script>
         function toggleMenu() {
             const aside = document.getElementById('sidebar');
-            aside.classList.toggle('w-[20%]');
-            aside.classList.toggle('w-16');
+            const main = document.getElementById('main-content');
 
+            const isExpanded = aside.classList.contains('w-[20%]');
+
+            if (isExpanded) {
+                // Contraer menú
+                aside.classList.remove('w-[20%]');
+                aside.classList.add('w-16');
+
+                main.classList.remove('ml-[20%]');
+                main.classList.add('ml-16');
+            } else {
+                // Expandir menú
+                aside.classList.remove('w-16');
+                aside.classList.add('w-[20%]');
+
+                main.classList.remove('ml-16');
+                main.classList.add('ml-[20%]');
+            }
+
+            // Ocultar labels
             const elements = aside.querySelectorAll('.menu-label, .user-info, .copyright');
             elements.forEach(el => el.classList.toggle('hidden'));
 
+            // Cambiar icono
             const icon = document.getElementById('toggle-icon');
             icon.classList.toggle('fa-angle-double-left');
             icon.classList.toggle('fa-angle-double-right');
         }
     </script>
 </head>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-@yield('scripts')
+
 
 
 <body class="@yield('body-class') bg-gray-100 flex min-h-screen">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    @yield('scripts')
 
     <!-- Menú lateral (20%) -->
     <aside id="sidebar"
@@ -125,7 +146,7 @@
     </aside>
 
     <!-- Contenido principal (80%) -->
-    <main id="main-content" class="flex-1 ml-[20%]">
+    <main id="main-content" class="flex-1 ml-[20%] transition-all duration-300">
         @yield('content')
     </main>
 
@@ -137,28 +158,38 @@
                 window.location.reload();
             }
         };
+    </script>
 
-        function verificarAutenticacion() {
-            fetch('/check-auth-status', {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                },
-                credentials: 'same-origin'
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (!data.authenticated) {
-                        window.location.href = '/login';
-                    }
-                })
-                .catch(error => console.error('Error verificando autenticación:', error));
+
+    <script>
+        let sessionCheckInterval = 300000; // 5 minutos
+        let warningTime = 600000; // 10 minutos
+
+        // Mantener sesión activa
+        setInterval(function () {
+            fetch('/keep-session-alive')
+                .catch(() => console.log("No se pudo mantener la sesión"));
+        }, sessionCheckInterval);
+
+
+        // Mostrar advertencia si el usuario lleva mucho tiempo
+        let warningTimer = setTimeout(function () {
+            alert("⚠️ Tu sesión está a punto de expirar.\n\nGuarda la información para evitar perder los datos.");
+        }, warningTime);
+
+
+        // Reiniciar contador si el usuario interactúa
+        function resetSessionTimer() {
+            clearTimeout(warningTimer);
+            warningTimer = setTimeout(function () {
+                alert("⚠️ Tu sesión está a punto de expirar.\n\nGuarda la información para evitar perder los datos.");
+            }, warningTime);
         }
 
-        if (document.body.classList.contains('authenticated-page')) {
-            setInterval(verificarAutenticacion, 60000);
-        }
+        // Detectar actividad del usuario
+        document.addEventListener("click", resetSessionTimer);
+        document.addEventListener("keypress", resetSessionTimer);
+        document.addEventListener("mousemove", resetSessionTimer);
     </script>
 </body>
 

@@ -26,6 +26,9 @@ use App\Http\Controllers\LibroContableController;
 Route::get('/login', [LoginController::class, 'showLoginForm'])
     ->name('login')
     ->middleware('guest');
+    Route::get('/keep-session-alive', function () {
+    return response()->json(['status' => 'alive']);
+});
 
 Route::post('/login', [LoginController::class, 'login'])
     ->name('login.attempt')
@@ -124,8 +127,7 @@ Route::middleware(['auth', 'checkRol:pastor,fiscal'])->group(function() {
 
     // ✝️ Diezmos y Ofrendas
     Route::resource('diezmo', DiezmoController::class);
-    Route::get('/diezmo', [DiezmoController::class, 'index'])->name('diezmo.index');
-    Route::post('/diezmo', [DiezmoController::class, 'store'])->name('diezmo.store');
+
 });
 
 // -------------------------------

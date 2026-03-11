@@ -19,10 +19,19 @@ class EgresoController extends Controller
      * Mostrar formulario para crear egreso.
      */
     public function create()
-    {
-        $casillas = Presupuesto::orderBy('nombre_casilla')->get();
-        return view('egresos.create', compact('casillas'));
+{
+    $libroActivo = LibroContable::where('estado', 'activo')->first();
+
+    if (!$libroActivo) {
+        return back()->withErrors(['error' => 'No hay un libro contable activo.']);
     }
+
+    $casillas = Presupuesto::where('año', $libroActivo->anio_libro)
+                ->orderBy('nombre_casilla')
+                ->get();
+
+    return view('egresos.create', compact('casillas', 'libroActivo'));
+}
 
     /**
      * Guardar egreso (varias casillas -> varios movimientos relacionados por grupo_id).
@@ -139,7 +148,17 @@ public function edit($id)
     // Todos los egresos del grupo
     $egresos = Egreso::where('movimiento_id', $movimiento->id)->get();
 
-    $casillas = Presupuesto::orderBy('nombre_casilla')->get();
+    // Buscar libro contable activo
+    $libro = LibroContable::where('estado', 'activo')->first();
+
+    if (!$libro) {
+        return back()->withErrors(['error' => 'No hay un libro contable activo.']);
+    }
+
+    // Casillas solo del año del libro
+    $casillas = Presupuesto::where('año', $libro->anio_libro)
+                ->orderBy('nombre_casilla')
+                ->get();
 
     return view('egresos.edit', compact('movimiento', 'egresos', 'casillas'));
 }

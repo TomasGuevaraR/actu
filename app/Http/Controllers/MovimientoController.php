@@ -147,18 +147,29 @@ class MovimientoController extends Controller
      * Eliminar movimiento
      */
     public function destroy($id)
-    {
-        $movimiento = Movimiento::findOrFail($id);
+{
+    $movimiento = Movimiento::findOrFail($id);
 
-        Movimiento::where('consecutivo', $movimiento->consecutivo)
-            ->where('concepto', $movimiento->concepto)
-            ->where('tipo', $movimiento->tipo)
-            ->delete();
+    if ($movimiento->tipo === 'ingreso') {
 
-        return redirect()->route('libro.index')
-            ->with('success', 'Movimiento eliminado correctamente 🗑️');
+        // eliminar diezmos asociados si existen
+        \App\Models\Diezmo::where('movimiento_id', $movimiento->id)->delete();
+
+        // eliminar solo este movimiento
+        $movimiento->delete();
+
+    } elseif ($movimiento->tipo === 'egreso') {
+
+        // eliminar egresos asociados
+        \App\Models\Egreso::where('movimiento_id', $movimiento->id)->delete();
+
+        // eliminar movimiento
+        $movimiento->delete();
     }
 
+    return redirect()->route('libro.index')
+        ->with('success', 'Movimiento eliminado correctamente 🗑️');
+}
     /**
      * Retornar detalles para el modal dinámico (Ingreso o Egreso)
      */
