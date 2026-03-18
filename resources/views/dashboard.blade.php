@@ -63,7 +63,7 @@
             $modulosSegundaFila = [
                 ['titulo' => 'Diezmos y Ofrendas', 'icono' => 'fa-hand-holding-heart', 'color' => 'text-green-500', 'ruta' => route('diezmo.index')],
                 ['titulo' => 'Usuarios', 'icono' => 'fa-user-shield', 'color' => 'text-indigo-600', 'ruta' => route('usuarios.index')],
-                ['titulo' => 'Reportes', 'icono' => 'fa-chart-bar', 'color' => 'text-purple-600', 'ruta' => route('reporte.index')],
+                ['titulo' => 'Reportes', 'icono' => 'fa-chart-bar', 'color' => 'text-purple-600', 'ruta' => route('reportes.index')],
                 ['titulo' => 'Mi Usuario', 'icono' => 'fa-user', 'color' => 'text-pink-500', 'ruta' => route('mi-perfil.index')],
             ];
         @endphp

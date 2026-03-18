@@ -2,33 +2,35 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\MiembroController;
 use App\Http\Controllers\PerfilController;
-use App\Http\Middleware\PreventBackHistory;
 use App\Http\Controllers\UsuarioController;
-use App\Models\Miembro;
 use App\Http\Controllers\PresupuestoController;
 use App\Http\Controllers\MovimientoController;
 use App\Http\Controllers\IngresoController;
 use App\Http\Controllers\EgresoController;
 use App\Http\Controllers\DiezmoController;
-use App\Http\Controllers\LibroController;
 use App\Http\Controllers\EstadoController;
 use App\Http\Controllers\ReporteController;
-use App\Http\Middleware\CheckRol;
 use App\Http\Controllers\LibroContableController;
 
+use App\Models\Miembro;
 
-// -------------------------------
-// RUTAS DE AUTENTICACIÓN PÚBLICAS
-// -------------------------------
+use App\Http\Middleware\PreventBackHistory;
+use App\Http\Middleware\CheckRol;
+
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS PÚBLICAS (AUTENTICACIÓN)
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/login', [LoginController::class, 'showLoginForm'])
     ->name('login')
     ->middleware('guest');
-    Route::get('/keep-session-alive', function () {
-    return response()->json(['status' => 'alive']);
-});
 
 Route::post('/login', [LoginController::class, 'login'])
     ->name('login.attempt')
@@ -38,101 +40,233 @@ Route::post('/logout', [LoginController::class, 'logout'])
     ->name('logout')
     ->middleware('auth');
 
-// Redirección raíz a login
 Route::get('/', fn () => redirect()->route('login'));
 
-// -------------------------------
-// RUTAS PRIVADAS (Requieren Login)
-// -------------------------------
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS PRIVADAS (USUARIO AUTENTICADO)
+|--------------------------------------------------------------------------
+*/
+
 Route::middleware(['auth', PreventBackHistory::class])->group(function () {
 
-    // Dashboard
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard
+    |--------------------------------------------------------------------------
+    */
+
     Route::get('/dashboard', fn () => view('dashboard'))->name('dashboard');
 
-    Route::view('/acerca-del-sistema', 'acerca')
-    ->name('acerca');
+    Route::view('/acerca-del-sistema', 'acerca')->name('acerca');
 
-    // 📚 Libro Contable
-    
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mantener sesión activa (evita error 419)
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/keep-session-alive', function () {
+        session(['keep_alive' => now()]);
+        return response()->json(['status' => 'alive']);
+    });
+Route::get('/refresh-csrf', function () {
+    return response()->json([
+        'csrf_token' => csrf_token()
+    ]);
+})->middleware('auth');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Libro Contable
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/libro-contable', [LibroContableController::class, 'index'])
+        ->name('libro.index');
+
+    Route::middleware(['checkRol:tesorero'])->group(function () {
+        Route::post('/libro-contable/{id}/cerrar', [LibroContableController::class, 'cerrar'])
+            ->name('libro.cerrar');
+    });
+
+    Route::middleware(['checkRol:pastor,fiscal'])->group(function () {
+        Route::post('/libro-contable/{id}/aprobar', [LibroContableController::class, 'aprobar'])
+            ->name('libro.aprobar');
+
+        Route::post('/libro-contable/{id}/rechazar', [LibroContableController::class, 'rechazar'])
+            ->name('libro.rechazar');
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Presupuestos y Movimientos
+    |--------------------------------------------------------------------------
+    */
+
+    Route::resource('presupuestos', PresupuestoController::class);
+
+    Route::resource('movimientos', MovimientoController::class);
+
     Route::get('/movimientos/{id}/detalles', [MovimientoController::class, 'detalles']);
 
-    Route::get('/libro-contable', [LibroContableController::class, 'index'])->name('libro.index');
-
-
-    Route::middleware(['auth', 'checkRol:tesorero'])->group(function() {
-    Route::post('/libro-contable/{id}/cerrar', [LibroContableController::class, 'cerrar'])->name('libro.cerrar');
-});
-
-Route::middleware(['auth', 'checkRol:pastor,fiscal'])->group(function() {
-    Route::post('/libro-contable/{id}/aprobar', [LibroContableController::class, 'aprobar'])->name('libro.aprobar');
-    Route::post('/libro-contable/{id}/rechazar', [LibroContableController::class, 'rechazar'])->name('libro.rechazar');
-});
-
-
-    // 💰 Presupuesto y Movimientos
-    Route::get('/presupuesto', fn () => view('presupuestos.index'))->name('presupuesto.index');
-    Route::resource('presupuestos', PresupuestoController::class);
-    Route::resource('movimientos', MovimientoController::class);
     Route::get('/movimientos/{id}/detalles-ingreso', [MovimientoController::class, 'detallesIngreso']);
-    
 
-    // 📊 Estados Financieros
+
+    /*
+    |--------------------------------------------------------------------------
+    | Estados Financieros
+    |--------------------------------------------------------------------------
+    */
+
     Route::get('/estados', [EstadoController::class, 'index'])->name('estado.index');
-    Route::get('/estado/saldo-inicial', [EstadoController::class, 'formSaldoInicial'])->name('estado.saldo-inicial.form');
-    Route::post('/estado/saldo-inicial', [EstadoController::class, 'guardarSaldoInicial'])->name('estado.saldo-inicial.guardar');
 
-    // 👥 Miembros
+    Route::get('/estado/saldo-inicial', [EstadoController::class, 'formSaldoInicial'])
+        ->name('estado.saldo-inicial.form');
+
+    Route::post('/estado/saldo-inicial', [EstadoController::class, 'guardarSaldoInicial'])
+        ->name('estado.saldo-inicial.guardar');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Miembros
+    |--------------------------------------------------------------------------
+    */
+
     Route::resource('miembros', MiembroController::class)->except(['show']);
-    Route::get('/miembros-export', [MiembroController::class, 'export'])->name('miembros.export');
-    Route::get('/miembros/exportar-csv', [MiembroController::class, 'exportCsv'])->name('miembros.export.csv');
-    Route::get('/miembros/{id}', [MiembroController::class, 'show'])->name('miembros.show');
 
-    // 👤 Usuarios
+    Route::get('/miembros/{id}', [MiembroController::class, 'show'])
+        ->name('miembros.show');
+
+    Route::get('/miembros-export', [MiembroController::class, 'export'])
+        ->name('miembros.export');
+
+    Route::get('/miembros/exportar-csv', [MiembroController::class, 'exportCsv'])
+        ->name('miembros.export.csv');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Usuarios
+    |--------------------------------------------------------------------------
+    */
+
     Route::resource('usuarios', UsuarioController::class);
-    Route::patch('/usuarios/{id}/toggle', [UsuarioController::class, 'toggle'])->name('usuarios.toggle');
-    Route::get('/usuarios/{id}/json', [PerfilController::class, 'getUsuarioJson'])->name('usuarios.json');
 
-    // 🙋‍♂ Perfil
+    Route::patch('/usuarios/{id}/toggle', [UsuarioController::class, 'toggle'])
+        ->name('usuarios.toggle');
+
+    Route::get('/usuarios/{id}/json', [PerfilController::class, 'getUsuarioJson'])
+        ->name('usuarios.json');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Perfil
+    |--------------------------------------------------------------------------
+    */
+
     Route::get('/mi-perfil', function () {
+
         $usuario = Auth::user();
-        $miembro = Miembro::where('numero_identificacion', $usuario->numero_identificacion)->first();
+
+        $miembro = Miembro::where(
+            'numero_identificacion',
+            $usuario->numero_identificacion
+        )->first();
+
         return view('mi_perfil.index', compact('usuario', 'miembro'));
+
     })->name('mi-perfil.index');
-    Route::put('/mi-perfil/actualizar', [PerfilController::class, 'update'])->name('mi-perfil.actualizar');
-    Route::get('/mi-perfil/editar', [PerfilController::class, 'edit'])->name('mi-perfil.edit');
-    Route::post('/mi-perfil/actualizar', [PerfilController::class, 'update'])->name('mi-perfil.update');
 
-    // 📈 Reportes
-    Route::get('/reporte', [ReporteController::class, 'index'])->name('reporte.index');
-    Route::post('/reportes', [ReporteController::class, 'store'])->name('reportes.store');
-    Route::delete('/reportes/{id}', [ReporteController::class, 'destroy'])->name('reportes.destroy');
-    Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
-    Route::get('/reporte/diezmo', [ReporteController::class, 'diezmo'])->name('reporte.diezmo');
-    Route::get('/reporte/diezmos/excel', [ReporteController::class, 'exportarCSV'])->name('reporte.diezmos.excel');
-    Route::get('/reporte/libros', [ReporteController::class, 'libros'])->name('reporte.libros');
-    Route::get('/reportes/libros/exportar', [ReporteController::class, 'exportarLibrosCSV'])->name('reportes.libros.exportar');
-    
+    Route::get('/mi-perfil/editar', [PerfilController::class, 'edit'])
+        ->name('mi-perfil.edit');
+
+    Route::put('/mi-perfil/actualizar', [PerfilController::class, 'update'])
+        ->name('mi-perfil.update');
 
 
-    // 💸 Egresos
-    Route::get('/egresos/create', [EgresoController::class, 'create'])->name('egresos.create');
-    Route::post('/egresos/store', [EgresoController::class, 'store'])->name('egresos.store');
-    Route::get('egresos/{id}/edit', [EgresoController::class, 'edit'])->name('egresos.edit');
-    Route::put('egresos/{id}', [EgresoController::class, 'update'])->name('egresos.update');
+    /*
+    |--------------------------------------------------------------------------
+    | Reportes
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/reportes', [ReporteController::class, 'index'])
+        ->name('reportes.index');
+
+    Route::post('/reportes', [ReporteController::class, 'store'])
+        ->name('reportes.store');
+
+    Route::delete('/reportes/{id}', [ReporteController::class, 'destroy'])
+        ->name('reportes.destroy');
+
+    Route::get('/reporte/diezmo', [ReporteController::class, 'diezmo'])
+        ->name('reporte.diezmo');
+
+    Route::get('/reporte/diezmos/excel', [ReporteController::class, 'exportarCSV'])
+        ->name('reporte.diezmos.excel');
+
+    Route::get('/reporte/libros', [ReporteController::class, 'libros'])
+        ->name('reporte.libros');
+
+    Route::get('/reportes/libros/exportar', [ReporteController::class, 'exportarLibrosCSV'])
+        ->name('reportes.libros.exportar');
 
 
-    // 💵 Ingresos
-    Route::get('/ingresos/create', [IngresoController::class, 'create'])->name('ingresos.create');
-    Route::post('/ingresos/store', [IngresoController::class, 'store'])->name('ingresos.store');
+    /*
+    |--------------------------------------------------------------------------
+    | Egresos
+    |--------------------------------------------------------------------------
+    */
 
-    // ✝️ Diezmos y Ofrendas
+    Route::get('/egresos/create', [EgresoController::class, 'create'])
+        ->name('egresos.create');
+
+    Route::post('/egresos/store', [EgresoController::class, 'store'])
+        ->name('egresos.store');
+
+    Route::get('/egresos/{id}/edit', [EgresoController::class, 'edit'])
+        ->name('egresos.edit');
+
+    Route::put('/egresos/{id}', [EgresoController::class, 'update'])
+        ->name('egresos.update');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Ingresos
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/ingresos/create', [IngresoController::class, 'create'])
+        ->name('ingresos.create');
+
+    Route::post('/ingresos/store', [IngresoController::class, 'store'])
+        ->name('ingresos.store');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Diezmos y Ofrendas
+    |--------------------------------------------------------------------------
+    */
+
     Route::resource('diezmo', DiezmoController::class);
 
 });
 
-// -------------------------------
-// RUTAS GENERADAS AUTOMÁTICAMENTE
-// -------------------------------
+
+/*
+|--------------------------------------------------------------------------
+| RUTAS GENERADAS AUTOMÁTICAMENTE
+|--------------------------------------------------------------------------
+*/
+
 if (file_exists(__DIR__.'/auth.php')) {
     require __DIR__.'/auth.php';
 }

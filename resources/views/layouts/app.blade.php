@@ -117,7 +117,7 @@
                 <i class="fas fa-user-gear text-pink-400"></i>
                 <span class="menu-label">Usuarios</span>
             </a>
-            <a href="{{ route('reporte.index') }}"
+            <a href="{{ route('reportes.index') }}"
                 class="flex items-center space-x-2 w-full px-2 py-2 rounded hover:bg-white hover:text-[#0166b3] transition">
                 <i class="fas fa-chart-bar text-cyan-400"></i>
                 <span class="menu-label">Reportes</span>
@@ -162,34 +162,61 @@
 
 
     <script>
-        let sessionCheckInterval = 300000; // 5 minutos
-        let warningTime = 600000; // 10 minutos
 
-        // Mantener sesión activa
+        let sessionInterval = 300000; // 5 minutos
+
         setInterval(function () {
-            fetch('/keep-session-alive')
-                .catch(() => console.log("No se pudo mantener la sesión"));
-        }, sessionCheckInterval);
 
+            fetch('/keep-session-alive', {
+                method: 'GET',
+                credentials: 'same-origin'
+            })
 
-        // Mostrar advertencia si el usuario lleva mucho tiempo
-        let warningTimer = setTimeout(function () {
-            alert("⚠️ Tu sesión está a punto de expirar.\n\nGuarda la información para evitar perder los datos.");
-        }, warningTime);
+                .then(response => {
 
+                    if (!response.ok) {
+                        throw new Error('Sesión expirada');
+                    }
 
-        // Reiniciar contador si el usuario interactúa
-        function resetSessionTimer() {
-            clearTimeout(warningTimer);
-            warningTimer = setTimeout(function () {
-                alert("⚠️ Tu sesión está a punto de expirar.\n\nGuarda la información para evitar perder los datos.");
-            }, warningTime);
-        }
+                    return response.json();
+                })
 
-        // Detectar actividad del usuario
-        document.addEventListener("click", resetSessionTimer);
-        document.addEventListener("keypress", resetSessionTimer);
-        document.addEventListener("mousemove", resetSessionTimer);
+                .then(() => {
+
+                    // renovar CSRF token
+                    return fetch('/refresh-csrf', {
+                        credentials: 'same-origin'
+                    });
+
+                })
+
+                .then(response => response.json())
+
+                .then(data => {
+
+                    let tokenMeta = document.querySelector('meta[name="csrf-token"]');
+
+                    if (tokenMeta) {
+                        tokenMeta.setAttribute('content', data.csrf_token);
+                    }
+
+                })
+
+                .catch(() => {
+
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Sesión expirada',
+                        text: 'Tu sesión ha expirado. Serás redirigido al login.',
+                        confirmButtonText: 'Aceptar'
+                    }).then(() => {
+                        window.location.href = '/login';
+                    });
+
+                });
+
+        }, sessionInterval);
+
     </script>
 </body>
 
